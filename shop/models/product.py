@@ -10,6 +10,7 @@ class Product(models.Model):
     actual_price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES, blank=True, null=True)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     color = models.CharField(max_length=50, blank=True, null=True)
     size = models.CharField(max_length=50, blank=True, null=True)
     stock_quantity = models.IntegerField()

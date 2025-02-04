@@ -1,0 +1,184 @@
+{% extends "base.html" %}  {# Extend SB Admin 2 base template #}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Add New Product</h1>
+    {% if messages %}
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {% for message in messages %}
+                <p>{{ message }}</p>
+            {% endfor %}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endif %}
+
+    {% if error_messages %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <ul>
+                {% for message in error_messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endif %}
+    <div class="card shadow mb-4">
+        <div class="card-body">
+            <form id="productForm" method="POST" action="{% url "add_product" %}">
+                {% csrf_token %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="name">Product Name</label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ name }}" required>
+                        <small class="text-danger error-message" id="nameError"></small>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="stock_quantity">Stock Quantity</label>
+                        <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="1" value="{{stock_quantity}}" required>
+                        <small class="text-danger error-message" id="stockQuantityError"></small>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="purchase_price">Purchase Price</label>
+                        <input type="number" class="form-control" id="purchase_price" name="purchase_price" min="1" value="{{ purchase_price }}" required>
+                        <small class="text-danger error-message" id="purchasePriceError"></small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label for="actual_price">Actual Price</label>
+                        <input type="number" class="form-control" id="actual_price" name="actual_price" min="1" value="{{ actual_price }}" required>
+                        <small class="text-danger error-message" id="actualPriceError"></small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="discount_type">Discount Type</label>
+                        <select class="form-control" id="discount_type" name="discount_type">
+                            <option value="">None</option>
+                            <option value="flat">Flat</option>
+                            <option value="percentage">Percentage</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="discount_amount">Discount Amount</label>
+                        <input type="number" class="form-control" id="discount_amount" name="discount_amount" min="0" value="{{ discount_amount}}">
+                        <small class="text-danger error-message" id="discountAmountError"></small>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="selling_price">Selling Price</label>
+                        <input type="number" class="form-control" id="selling_price" name="selling_price" value="{{ selling_price}}" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    
+
+                    <div class="col-md-6 mb-3">
+                        <label for="color">Color</label>
+                        <input type="text" class="form-control" id="color" name="color" value="{{ color }}">
+                    </div>
+                
+                    <div class="col-md-6 mb-3">
+                        <label for="size">Size</label>
+                        <input type="text" class="form-control" id="size" name="size" value="{{ size }}">
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="description">Description</label>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ description }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Add Product</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- jQuery & Form Validation -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Calculate Selling Price based on Discount Type
+        function calculateSellingPrice() {
+            var actualPrice = parseFloat($("#actual_price").val());
+            var discountAmount = parseFloat($("#discount_amount").val());
+            var discountType = $("#discount_type").val();
+            var sellingPrice = actualPrice;
+
+            if (discountType === "flat" && !isNaN(discountAmount)) {
+                sellingPrice = actualPrice - discountAmount;
+            } else if (discountType === "percentage" && !isNaN(discountAmount)) {
+                sellingPrice = actualPrice - ((discountAmount / 100) * actualPrice);
+            }
+
+            // Update Selling Price field
+            $("#selling_price").val(sellingPrice.toFixed(2));
+        }
+
+        // Event listeners to trigger selling price calculation
+        $("#actual_price, #discount_type, #discount_amount").on("input", function() {
+            calculateSellingPrice();
+        });
+
+        $("#productForm").on("submit", function(event) {
+            let isValid = true;
+            $(".error-message").text(""); // Clear previous error messages
+
+            // Validate Product Name
+            let name = $("#name").val().trim();
+            if (name.length < 3) {
+                $("#nameError").text("Product name must be at least 3 characters long.");
+                isValid = false;
+            }
+
+            // Validate SKU
+            let sku = $("#sku").val().trim();
+            if (sku === "") {
+                $("#skuError").text("SKU is required.");
+                isValid = false;
+            }
+
+            // Validate Stock Quantity
+            let stockQuantity = $("#stock_quantity").val();
+            if (stockQuantity <= 0) {
+                $("#stockQuantityError").text("Stock quantity must be at least 1.");
+                isValid = false;
+            }
+
+            // Validate Purchase Price
+            let purchasePrice = $("#purchase_price").val();
+            if (purchasePrice <= 0) {
+                $("#purchasePriceError").text("Purchase price must be greater than 0.");
+                isValid = false;
+            }
+
+            // Validate Actual Price
+            let actualPrice = $("#actual_price").val();
+            if (actualPrice <= 0) {
+                $("#actualPriceError").text("Actual price must be greater than 0.");
+                isValid = false;
+            }
+
+            // Validate Discount Amount if Discount Type is Selected
+            let discountType = $("#discount_type").val();
+            let discountAmount = $("#discount_amount").val();
+            if (discountType !== "" && discountAmount <= 0) {
+                $("#discountAmountError").text("Discount amount must be greater than 0.");
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault(); // Prevent form submission if validation fails
+            }
+        });
+    });
+</script>
+
+{% endblock %}
