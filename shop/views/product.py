@@ -1,10 +1,11 @@
-from django.shortcuts import render, redirect, HttpResponse
+from django.shortcuts import render, redirect, get_object_or_404
 from shop.models.product import Product
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 import random
 from decimal import Decimal
 from django.contrib import messages
+from shop.utils.barcode import create_label
 
 def generate_sku(product_name):
     # Create SKU prefix by taking the first letter of each word in the product name
@@ -31,6 +32,8 @@ def add_product(request):
         stock_quantity = request.POST.get('stock_quantity')
         description = request.POST.get('description')
         discount_type = request.POST.get('discount_type')
+        color = request.POST.get('color')
+        size = request.POST.get('size')
         
         # Initialize error messages
         error_messages = []
@@ -87,7 +90,15 @@ def add_product(request):
 
         try:
             sku=generate_sku(name)
-            # Create the product object and save it
+
+            if len(sku) > 10:
+                barcode = sku[:10]
+            elif len(sku) < 10:
+                barcode = sku.ljust(10, '0')
+            else:
+                barcode = sku
+
+            # Create the product object and save 
             product = Product(
                 name=name,
                 sku=sku,
@@ -98,9 +109,13 @@ def add_product(request):
                 discount_amount=discount_amount,
                 description=description,
                 selling_price=selling_price,
-                barcode= f"{sku}-{random.randint(100, 999)}"
+                barcode=barcode,
+                color=color,
+                size=size
             )
             product.save()
+
+            create_label(sku, barcode, size, actual_price, color, cell="A0")
 
             # Display success message
             messages.success(request, f"{sku}- {stock_quantity} - Product added successfully!")
@@ -140,4 +155,59 @@ def add_product(request):
         return render(request, 'shop/add_product.html')
 
 def view_product(request):
-    return HttpResponse("hello world")
+    if request.method == "GET":
+        products = Product.objects.all().order_by('-id')
+        return render(request, 'shop/view_product.html', {'products': products})
+    
+def edit_product(request, id):
+    product = get_object_or_404(Product, id=id)
+
+    if request.method == 'POST':
+        # Get the form data from POST request
+        name = request.POST.get('name')
+        sku = request.POST.get('sku')
+        stock_quantity = request.POST.get('stock_quantity')
+        purchase_price = request.POST.get('purchase_price')
+        actual_price = request.POST.get('actual_price')
+        selling_price = request.POST.get('selling_price')
+        discount_type = request.POST.get('discount_type')
+        discount_amount = request.POST.get('discount_amount')
+        description = request.POST.get('description')
+        color = request.POST.get('color')
+        size = request.POST.get('size')
+        barcode = request.POST.get('barcode')
+
+        # Initialize error messages
+        error_messages = []
+
+        # Perform necessary validation
+        try:
+            # You can add custom validation here as per your needs
+            if not name or not sku or not stock_quantity or not purchase_price or not actual_price:
+                error_messages.append("Required fields are missing!")
+
+            # Update the product
+            product.name = name
+            product.sku = sku
+            product.stock_quantity = stock_quantity
+            product.purchase_price = purchase_price
+            product.actual_price = actual_price
+            product.selling_price = selling_price
+            product.discount_type = discount_type
+            product.discount_amount = discount_amount
+            product.description = description
+            product.color = color
+            product.size = size
+            product.barcode = barcode
+            product.save()
+
+            create_label(sku, barcode, size, actual_price, color, cell="A0")
+            # Success message
+            messages.success(request, f'{sku} - Product updated successfully.')
+            return redirect('view_product')  # Redirect to the product list page
+        except ValueError as e:
+            # Handle form validation errors
+            error_messages.append(request, f"Error: {str(e)}")
+    else:
+        # Render the form with pre-filled product data
+        return render(request, 'shop/edit_product.html', {'product': product})

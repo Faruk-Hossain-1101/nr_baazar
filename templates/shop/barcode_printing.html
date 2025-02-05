@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Label Template</title>
+    <style>
+        /* Main Wrapper */
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0; /* Remove gaps to prevent blank labels */
+            align-items: center;
+        }
+
+        /* Label Container (Each Row) */
+        .label-container {
+            width: 81.6mm;
+            height: 25mm;
+            display: flex;
+            align-items: center;
+            background: white;
+            padding-left: 1.3mm;
+            page-break-inside: avoid; /* Prevent breaking labels */
+        }
+
+        /* Each Label */
+        .label {
+            width: 38mm;
+            height: 25mm;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Image inside the label */
+        .label img {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* 3mm Gap */
+        .gap {
+            width: 3mm;
+        }
+
+        /* Buttons */
+        .btn-container {
+            margin-top: 10px;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            color: white;
+            margin-left: 47%;
+        }
+
+        .btn-print {
+            background: #007bff;
+        }
+
+        /* ✅ Print Optimization */
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+
+            .btn-container {
+                display: none; /* Hide buttons in print */
+            }
+
+            .main-container {
+                align-items: flex-start; /* Align to top-left when printing */
+            }
+
+            .label-container {
+                margin-bottom: 0; /* Remove gaps between rows */
+                page-break-inside: avoid; /* Prevent labels from splitting */
+            }
+
+            @page {
+                size: auto;
+                margin: 0; /* Remove extra white space on print */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Label Wrapper (Multiple Labels) -->
+    <div class="main-container">
+        {% for label1, label2 in label_pairs %}
+            <div class="label-container">
+                <div class="label">
+                    <img src="{{ MEDIA_URL }}/media/{{ label1 }}.png" alt="Label 1">
+                </div>
+                {% if label2 %}
+                    <div class="gap"></div>
+                    <div class="label">
+                        <img src="{{ MEDIA_URL }}/media/{{ label2 }}.png" alt="Label 2">
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        
+    </div>
+
+    <!-- Print Button -->
+    <div class="btn-container">
+        <button class="btn btn-print" onclick="window.print()">Print Labels</button>
+    </div>
+
+</body>
+</html>

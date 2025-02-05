@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container-fluid">
-    <h1 class="h3 mb-4 text-gray-800">Add New Product</h1>
+    <h1 class="h3 mb-4 text-gray-800">Edit Product</h1>
     {% if messages %}
         <div class="alert alert-success alert-dismissible fade show" role="alert">
             {% for message in messages %}
@@ -28,25 +28,25 @@
     {% endif %}
     <div class="card shadow mb-4">
         <div class="card-body">
-            <form id="productForm" method="POST" action="{% url "add_product" %}">
+            <form id="productForm" method="POST" action="{% url "edit_product" product.id %}">
                 {% csrf_token %}
 
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label for="name">Product Name</label>
-                        <input type="text" class="form-control" id="name" name="name" value="{{ name }}" required>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ product.name }}" required>
                         <small class="text-danger error-message" id="nameError"></small>
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label for="stock_quantity">Stock Quantity</label>
-                        <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="1" value="{{stock_quantity}}" required>
+                        <input type="number" class="form-control" id="stock_quantity" name="stock_quantity" min="1" value="{{ product.stock_quantity }}" required>
                         <small class="text-danger error-message" id="stockQuantityError"></small>
                     </div>
 
                     <div class="col-md-3 mb-3">
                         <label for="purchase_price">Purchase Price</label>
-                        <input type="number" class="form-control" id="purchase_price" name="purchase_price" min="1" value="{{ purchase_price }}" required>
+                        <input type="number" class="form-control" id="purchase_price" name="purchase_price" min="1" value="{{ product.purchase_price }}" required>
                         <small class="text-danger error-message" id="purchasePriceError"></small>
                     </div>
                 </div>
@@ -54,25 +54,25 @@
                 <div class="row">
                     <div class="col-md-3 mb-3">
                         <label for="actual_price">Actual Price</label>
-                        <input type="number" class="form-control" id="actual_price" name="actual_price" min="1" value="{{ actual_price }}" required>
+                        <input type="number" class="form-control" id="actual_price" name="actual_price" min="1" value="{{ product.actual_price }}" required>
                         <small class="text-danger error-message" id="actualPriceError"></small>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="discount_type">Discount Type</label>
                         <select class="form-control" id="discount_type" name="discount_type">
                             <option value="">None</option>
-                            <option value="flat">Flat</option>
-                            <option value="percentage">Percentage</option>
+                            <option value="flat" {% if product.discount_type == "flat" %}selected{% endif %}>Flat</option>
+                            <option value="percentage" {% if product.discount_type == "percentage" %}selected{% endif %}>Percentage</option>
                         </select>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="discount_amount">Discount Amount</label>
-                        <input type="number" class="form-control" id="discount_amount" name="discount_amount" min="0" value="{{ discount_amount}}">
+                        <input type="number" class="form-control" id="discount_amount" name="discount_amount" min="0" value="{{ product.discount_amount}}">
                         <small class="text-danger error-message" id="discountAmountError"></small>
                     </div>
                     <div class="col-md-3 mb-3">
                         <label for="selling_price">Selling Price</label>
-                        <input type="number" class="form-control" id="selling_price" name="selling_price" value="{{ selling_price}}" readonly>
+                        <input type="number" class="form-control" id="selling_price" name="selling_price" value="{{ product.selling_price}}" readonly>
                     </div>
                 </div>
 
@@ -81,19 +81,21 @@
 
                     <div class="col-md-6 mb-3">
                         <label for="color">Color</label>
-                        <input type="text" class="form-control" id="color" name="color" value="{{ color }}">
+                        <input type="text" class="form-control" id="color" name="color" value="{{ product.color }}">
                     </div>
                 
                     <div class="col-md-6 mb-3">
                         <label for="size">Size</label>
-                        <input type="text" class="form-control" id="size" name="size" value="{{ size }}">
+                        <input type="text" class="form-control" id="size" name="size" value="{{ product.size }}">
                     </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="description">Description</label>
-                    <textarea class="form-control" id="description" name="description" rows="3">{{ description }}</textarea>
+                    <textarea class="form-control" id="description" name="description" rows="3">{{ product.description }}</textarea>
                 </div>
+                <input type="hidden" name="sku" value={{ product.sku }} />
+                <input type="hidden" name="barcode" value={{ product.barcode }} />
 
                 <button type="submit" class="btn btn-primary btn-block">Add Product</button>
             </form>
@@ -180,94 +182,5 @@
         });
     });
 </script>
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Label Template</title>
-    <style>
-        /* Label Container (Exact Dimensions) */
-        .label-container {
-            width: 81.6mm;
-            height: 25mm;
-            display: flex;
-            align-items: center;
-            background: white;
-            padding-left: 1.3mm;
-        }
-
-        /* Each Label */
-        .label {
-            width: 38mm;
-            height: 25mm;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Image inside the label */
-        .label img {
-            max-width: 100%;
-            max-height: 100%;
-        }
-
-        /* 3mm Gap */
-        .gap {
-            width: 3mm;
-        }
-
-        /* ✅ Print Optimization for TSC Printer */
-        @media print {
-            /* Remove everything except the label */
-            body {
-                margin: 0;
-                padding: 0;
-            }
-
-            .print-btn {
-                display: none; /* Hide print button */
-            }
-
-            /* Ensure the label container is fully visible */
-            .label-container {
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 81.6mm;
-                height: 25mm;
-                display: flex;
-                align-items: center;
-                page-break-inside: avoid;
-            }
-
-            /* Ensure flexbox stays in one line */
-            .label {
-                display: inline-flex;
-            }
-
-            /* 🔥 Trick to remove headers/footers (only works in some browsers) */
-            @page {
-                size: auto; /* Auto size for printer */
-                margin: 0; /* Remove default margins (header/footer) */
-            }
-        }
-    </style>
-</head>
-<body>
-
-    <!-- Label Layout -->
-    <div class="label-container">
-        <div class="label"><img src="{{ MEDIA_URL }}/media/NP690.png" alt="Label 1"></div>
-        <div class="gap"></div>
-        <div class="label"><img src="{{ MEDIA_URL }}/media/NP690.png" alt="Label 2"></div>
-    </div>
-
-    <!-- Print Button -->
-    <button class="print-btn" onclick="window.print()">Print Labels</button>
-
-</body>
-</html>
 
 {% endblock %}
