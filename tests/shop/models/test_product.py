@@ -9,11 +9,12 @@ class ProductModelTest(TestCase):
             actual_price=1000.00,
             discount_type="percentage",
             discount_amount=20.00,
+            selling_price=980.00,
             color="Red",
             size="M",
             stock_quantity=50,
-            barcode="1234567890123",
             sku="TSH123",
+            cell="A1",
             description="A comfortable cotton T-shirt"
         )
 
@@ -24,10 +25,10 @@ class ProductModelTest(TestCase):
         self.assertEqual(self.product.actual_price, 1000.00)
         self.assertEqual(self.product.discount_type, "percentage")
         self.assertEqual(self.product.discount_amount, 20.00)
+        self.assertEqual(self.product.selling_price, 980.00)
         self.assertEqual(self.product.color, "Red")
         self.assertEqual(self.product.size, "M")
         self.assertEqual(self.product.stock_quantity, 50)
-        self.assertEqual(self.product.barcode, "1234567890123")
         self.assertEqual(self.product.sku, "TSH123")
         self.assertEqual(self.product.description, "A comfortable cotton T-shirt")
 
@@ -42,6 +43,7 @@ class ProductModelTest(TestCase):
             purchase_price=700.00,
             actual_price=1400.00,
             stock_quantity=30,
+            selling_price=1400,
             sku="JNS456"
         )
         self.assertIsNone(product_no_discount.discount_type)

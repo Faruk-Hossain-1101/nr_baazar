@@ -3,7 +3,7 @@ from shop.models.product import Product
 from django.db import IntegrityError
 from django.core.exceptions import ValidationError
 import random
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from shop.utils.barcode import create_label
 
@@ -27,55 +27,52 @@ def generate_sku(product_name):
 
 def add_product(request):
     if request.method == 'POST':
-        # Get data from the form
-        name = request.POST.get('name')
-        stock_quantity = request.POST.get('stock_quantity')
-        description = request.POST.get('description')
-        discount_type = request.POST.get('discount_type')
-        color = request.POST.get('color')
-        size = request.POST.get('size')
-        cell = request.POST.get('cell')
-        
+        # Retrieve and sanitize input data
+        name = request.POST.get('name', '').strip()
+        stock_quantity = request.POST.get('stock_quantity', '').strip()
+        description = request.POST.get('description', '').strip()
+        discount_type = request.POST.get('discount_type', '').strip()
+        color = request.POST.get('color', '').strip()
+        size = request.POST.get('size', '').strip()
+        cell = request.POST.get('cell', '').strip()
+
         # Initialize error messages
         error_messages = []
-        
-        # Ensure the input is sanitized before converting to Decimal
+
+        # Validate required fields
+        if not name:
+            error_messages.append("Product name is required.")
+        if not stock_quantity or not stock_quantity.isdigit():
+            error_messages.append("Stock quantity must be a valid number.")
+
+        # Handle price fields safely
         try:
             purchase_price = request.POST.get('purchase_price', '').replace(",", "").strip()
             actual_price = request.POST.get('actual_price', '').replace(",", "").strip()
             selling_price = request.POST.get('selling_price', '').replace(",", "").strip()
 
-            # Only convert if the value is not empty
-            if purchase_price:
-                purchase_price = Decimal(purchase_price)
-            else:
+            purchase_price = Decimal(purchase_price) if purchase_price else None
+            actual_price = Decimal(actual_price) if actual_price else None
+            selling_price = Decimal(selling_price) if selling_price else None
+
+            if purchase_price is None:
                 error_messages.append("Purchase price is required.")
-
-            if actual_price:
-                actual_price = Decimal(actual_price)
-            else:
+            if actual_price is None:
                 error_messages.append("Actual price is required.")
-
-            if selling_price:
-                selling_price = Decimal(selling_price)
-            else:
+            if selling_price is None:
                 error_messages.append("Selling price is required.")
-
-        except (ValueError, Decimal.InvalidOperation) as e:
-            error_messages.append("Invalid decimal format in price fields.")
         
-        discount_amount = request.POST.get('discount_amount', '').replace(",", "").strip()
+        except (ValueError, InvalidOperation):
+            error_messages.append("Invalid decimal format in price fields.")
 
+        # Handle discount amount
         try:
-            # Convert discount_amount to Decimal, if provided
-            if discount_amount:
-                discount_amount = Decimal(discount_amount)
-            else:
-                discount_amount = None  # Optional field
-        except (ValueError, Decimal.InvalidOperation) as e:
+            discount_amount = request.POST.get('discount_amount', '').replace(",", "").strip()
+            discount_amount = Decimal(discount_amount) if discount_amount else None
+        except (ValueError, InvalidOperation):
             discount_amount = None
 
-
+        # If errors exist, re-render form with previous values
         if error_messages:
             return render(request, 'shop/add_product.html', {
                 'error_messages': error_messages,
@@ -87,23 +84,23 @@ def add_product(request):
                 'actual_price': actual_price,
                 'selling_price': selling_price,
                 'discount_amount': discount_amount,
+                'color': color,
+                'size': size,
+                'cell': cell,
             })
 
         try:
-            sku=generate_sku(name)
+            # Generate a unique SKU
+            sku = generate_sku(name)
 
-            if len(sku) > 10:
-                barcode = sku[:10]
-            elif len(sku) < 10:
-                barcode = sku.ljust(10, '0')
-            else:
-                barcode = sku
+            # Ensure barcode is 10 characters long
+            barcode = sku[:10] if len(sku) > 10 else sku.ljust(10, '0')
 
-            # Create the product object and save 
+            # Create and save the product
             product = Product(
                 name=name,
                 sku=sku,
-                stock_quantity=stock_quantity,
+                stock_quantity=int(stock_quantity),
                 purchase_price=purchase_price,
                 actual_price=actual_price,
                 discount_type=discount_type,
@@ -117,44 +114,17 @@ def add_product(request):
             )
             product.save()
 
+            # Generate barcode label
             create_label(sku, barcode, size, actual_price, color, cell)
 
-            # Display success message
-            messages.success(request, f"{sku}- {stock_quantity} - Product added successfully!")
-
-            # Redirect to the same form with a success message
+            # Success message
+            messages.success(request, f"{sku} - {stock_quantity} units added successfully!")
             return redirect('add_product')
 
         except IntegrityError:
-            error_messages.append("SKU must be unique.")
-            return render(request, 'shop/add_product.html', {
-                'error_messages': error_messages,
-                'name': name,
-                'stock_quantity': stock_quantity,
-                'description': description,
-                'discount_type': discount_type,
-                'purchase_price': purchase_price,
-                'actual_price': actual_price,
-                'selling_price': selling_price,
-                'discount_amount': discount_amount,
-            })
+            messages.error(request, "SKU must be unique.")
 
-        except ValidationError as e:
-            error_messages.append(str(e))
-            return render(request, 'shop/add_product.html', {
-                'error_messages': error_messages,
-                'name': name,
-                'stock_quantity': stock_quantity,
-                'description': description,
-                'discount_type': discount_type,
-                'purchase_price': purchase_price,
-                'actual_price': actual_price,
-                'selling_price': selling_price,
-                'discount_amount': discount_amount,
-            })
-    
-    else:
-        return render(request, 'shop/add_product.html')
+    return render(request, 'shop/add_product.html')
 
 def view_product(request):
     if request.method == "GET":
@@ -165,34 +135,71 @@ def edit_product(request, id):
     product = get_object_or_404(Product, id=id)
 
     if request.method == 'POST':
-        # Get the form data from POST request
-        name = request.POST.get('name')
-        sku = request.POST.get('sku')
-        stock_quantity = request.POST.get('stock_quantity')
-        purchase_price = request.POST.get('purchase_price')
-        actual_price = request.POST.get('actual_price')
-        selling_price = request.POST.get('selling_price')
-        discount_type = request.POST.get('discount_type')
-        discount_amount = request.POST.get('discount_amount')
-        description = request.POST.get('description')
-        color = request.POST.get('color')
-        size = request.POST.get('size')
-        cell = request.POST.get('cell')
-        barcode = request.POST.get('barcode')
+        # Get form data
+        name = request.POST.get('name', '').strip()
+        sku = request.POST.get('sku', '').strip()
+        stock_quantity = request.POST.get('stock_quantity', '').strip()
+        purchase_price = request.POST.get('purchase_price', '').replace(",", "").strip()
+        actual_price = request.POST.get('actual_price', '').replace(",", "").strip()
+        selling_price = request.POST.get('selling_price', '').replace(",", "").strip()
+        discount_type = request.POST.get('discount_type', '').strip()
+        discount_amount = request.POST.get('discount_amount', '').replace(",", "").strip()
+        description = request.POST.get('description', '').strip()
+        color = request.POST.get('color', '').strip()
+        size = request.POST.get('size', '').strip()
+        cell = request.POST.get('cell', '').strip()
+        barcode = request.POST.get('barcode', '').strip()
 
         # Initialize error messages
         error_messages = []
 
-        # Perform necessary validation
-        try:
-            # You can add custom validation here as per your needs
-            if not name or not sku or not stock_quantity or not purchase_price or not actual_price:
-                error_messages.append("Required fields are missing!")
+        # Check required fields
+        if not name:
+            error_messages.append("Product name is required.")
+        if not sku:
+            error_messages.append("SKU is required.")
+        if not stock_quantity.isdigit():
+            error_messages.append("Stock quantity must be a valid number.")
+        if not purchase_price:
+            error_messages.append("Purchase price is required.")
+        if not actual_price:
+            error_messages.append("Actual price is required.")
+        if not selling_price:
+            error_messages.append("Selling price is required.")
 
-            # Update the product
+        # Convert values to Decimal safely
+        try:
+            purchase_price = Decimal(purchase_price) if purchase_price else None
+            actual_price = Decimal(actual_price) if actual_price else None
+            selling_price = Decimal(selling_price) if selling_price else None
+            discount_amount = Decimal(discount_amount) if discount_amount else None
+        except (ValueError, InvalidOperation):
+            error_messages.append("Invalid format for price fields.")
+
+        if error_messages:
+            return render(request, 'shop/edit_product.html', {
+                'product': product,  # Pass the existing product
+                'error_messages': error_messages,
+                'name': name,
+                'sku': sku,
+                'stock_quantity': stock_quantity,
+                'description': description,
+                'discount_type': discount_type,
+                'purchase_price': purchase_price,
+                'actual_price': actual_price,
+                'selling_price': selling_price,
+                'discount_amount': discount_amount,
+                'color': color,
+                'size': size,
+                'cell': cell,
+                'barcode': barcode,
+            })
+
+        try:
+            # Update product
             product.name = name
             product.sku = sku
-            product.stock_quantity = stock_quantity
+            product.stock_quantity = int(stock_quantity)  # Convert stock to integer
             product.purchase_price = purchase_price
             product.actual_price = actual_price
             product.selling_price = selling_price
@@ -205,13 +212,15 @@ def edit_product(request, id):
             product.barcode = barcode
             product.save()
 
+            # Generate a new barcode label
             create_label(sku, barcode, size, actual_price, color, cell)
+
             # Success message
             messages.success(request, f'{sku} - Product updated successfully.')
-            return redirect('view_product')  # Redirect to the product list page
-        except ValueError as e:
-            # Handle form validation errors
-            error_messages.append(request, f"Error: {str(e)}")
-    else:
-        # Render the form with pre-filled product data
-        return render(request, 'shop/edit_product.html', {'product': product})
+            return redirect('view_product')
+
+        except IntegrityError:
+            messages.error(request, "SKU must be unique.")
+
+    # Render the form with existing product data
+    return render(request, 'shop/edit_product.html', {'product': product})
