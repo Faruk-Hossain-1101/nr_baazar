@@ -34,6 +34,7 @@ def add_product(request):
         discount_type = request.POST.get('discount_type')
         color = request.POST.get('color')
         size = request.POST.get('size')
+        cell = request.POST.get('cell')
         
         # Initialize error messages
         error_messages = []
@@ -111,11 +112,12 @@ def add_product(request):
                 selling_price=selling_price,
                 barcode=barcode,
                 color=color,
-                size=size
+                size=size,
+                cell=cell
             )
             product.save()
 
-            create_label(sku, barcode, size, actual_price, color, cell="A0")
+            create_label(sku, barcode, size, actual_price, color, cell)
 
             # Display success message
             messages.success(request, f"{sku}- {stock_quantity} - Product added successfully!")
@@ -175,6 +177,7 @@ def edit_product(request, id):
         description = request.POST.get('description')
         color = request.POST.get('color')
         size = request.POST.get('size')
+        cell = request.POST.get('cell')
         barcode = request.POST.get('barcode')
 
         # Initialize error messages
@@ -198,10 +201,11 @@ def edit_product(request, id):
             product.description = description
             product.color = color
             product.size = size
+            product.cell = cell
             product.barcode = barcode
             product.save()
 
-            create_label(sku, barcode, size, actual_price, color, cell="A0")
+            create_label(sku, barcode, size, actual_price, color, cell)
             # Success message
             messages.success(request, f'{sku} - Product updated successfully.')
             return redirect('view_product')  # Redirect to the product list page

@@ -17,6 +17,8 @@ class Product(models.Model):
     barcode = models.CharField(max_length=25, null=True, blank=True)
     sku = models.CharField(max_length=15)
     description = models.TextField(blank=True, null=True)
+    cell = models.CharField(max_length=10, null=True, blank=True, default='')
+    is_printed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
