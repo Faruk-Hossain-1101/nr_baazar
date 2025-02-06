@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Customer Details Row -->
+    <div class="row mb-3">
+        <div class="col-md-3">
+            <label for="customerPhone">Phone</label>
+            <input type="text" class="form-control" id="customerPhone" max="10" oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);">
+        </div>
+        <div class="col-md-3">
+            <label for="customerName">Name</label>
+            <input type="text" class="form-control" id="customerName">
+        </div>
+        <div class="col-md-6">
+            <label for="customerAddress">Address</label>
+            <input type="text" class="form-control" id="customerAddress">
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Left Side: Product Search & Move to Cart -->
+        <div class="col-md-5">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <label for="barcodeSearch">Scan Barcode</label>
+                    <input type="text" class="form-control" id="barcodeSearch" max="10" oninput="this.value = this.value.replace(/[^0-9a-zA-Z]/g, '').slice(0, 10);">
+                    
+                    <div class="row mt-2">
+                        <div class="col-md-12">
+                            <label for="productSummary">Product Summary</label>
+                            <input type="text" class="form-control" id="productSummary" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-2 align-items-end">
+                        <div class="col-md-4">
+                            <label for="amount">Amount</label>
+                            <input type="text" class="form-control" id="amount" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="discountAmount">Discount</label>
+                            <input type="number" class="form-control" id="discountAmount">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="quantity">Quantity</label>
+                            <input type="number" class="form-control" id="quantity" min="1" value="1">
+                        </div>
+                        <div class="col-md-12 text-right mt-2">
+                            <button class="btn btn-primary btn-sm" id="moveToCart">Move >></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Side: Cart Details -->
+        <div class="col-md-7">
+            <div class="card shadow mb-4">
+                <div class="card-body">
+                    <h5>Cart Details</h5>
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Product Name</th>
+                                <th>Rate</th>
+                                <th>Discount</th>
+                                <th>Qty</th>
+                                <th>Amount</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cartItems">
+                            <!-- Items will be added dynamically -->
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th colspan="4" class="text-right">Total:</th>
+                                <th id="totalQty">0</th>
+                                <th id="totalAmount">0.00</th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-6 align-items-center">
+                            <div class="form-check form-switch me-3">
+                                <input class="form-check-input" type="checkbox" id="toggleRoundOff">
+                                <label class="form-check-label" for="toggleRoundOff">Enable Round Off</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="toggleDue">
+                                <label class="form-check-label" for="toggleDue">Enable Due</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Fixed Two-Column Input Fields -->
+                    <div class="row mb-2 d-none" id="inputFields">
+                        <div class="col-md-6 d-none" id="roundOffContainer">
+                            <label for="roundOffInput">Round Off</label>
+                            <input type="text" class="form-control" id="roundOffInput">
+                        </div>
+                        <div class="col-md-6 d-none" id="dueContainer">
+                            <label for="paidInput">Paid Amount</label>
+                            <input type="text" class="form-control" id="paidInput">
+                        </div>
+                    </div>
+                    
+                    <div class="text-right">
+                        <button class="btn btn-warning btn-sm" id="btnDraft" >Draft</button>
+                        <button class="btn btn-success btn-sm">Purchase</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock  %}
+{% block extra_script %}
+<script>
+    $(document).ready(function() {
+        let cart = {
+            items: {},
+            customer: {},
+            roundOff: 0,
+            totalAmount: 0,
+            paidAmount: 0
+        };
+
+        function updateCart() {
+            let totalQty = 0;
+            let totalAmount = 0;
+            let cartHtml = '';
+            let index = 1;
+
+            for (let key in cart.items) {
+                let item = cart.items[key];
+                totalQty += item.qty;
+                totalAmount += item.amount;
+                cartHtml += `<tr>
+                    <td>${index++}</td>
+                    <td>${item.productName}</td>
+                    <td>${item.rate.toFixed(2)}</td>
+                    <td>${item.discount.toFixed(2)}</td>
+                    <td>${item.qty}</td>
+                    <td>${item.amount.toFixed(2)}</td>
+                    <td><button class="btn btn-sm btn-warning edit-item" data-barcode="${key}"><<</button></td>
+                </tr>`;
+            }
+
+            cart.totalAmount = totalAmount - cart.roundOff;
+            $('#cartItems').html(cartHtml);
+            $('#totalQty').text(totalQty);
+            $('#totalAmount').text(cart.totalAmount.toFixed(2));
+        }
+
+        function check_discount_price(barcode, discount_amount, callback){
+            $.ajax({
+                url: {% url "check_discount" %},
+                type: 'GET',
+                data: { discount_amount: discount_amount, barcode: barcode },
+                success: function(response) {
+                    if (response.success) {
+                        callback(true)
+                    }else{
+                        callback(false)
+                    }
+                },
+                error: function(error) {
+                    console.log(error)
+                    alert('Error fetching product details');
+                    callback(false)
+                }
+            })
+
+        }
+
+        function clearFields() {
+            $('#barcodeSearch').val('');
+            $('#productSummary').val('');
+            $('#amount').val('');
+            $('#discountAmount').val('');
+            $('#quantity').val(1);
+        }
+
+        function toggleFields() {
+            let roundOffChecked = $('#toggleRoundOff').is(':checked');
+            let dueChecked = $('#toggleDue').is(':checked');
+    
+            // Always show the input container
+            if (roundOffChecked || dueChecked) {
+                $('#inputFields').removeClass('d-none');
+            } else {
+                $('#inputFields').addClass('d-none');
+            }
+    
+            // Show/hide fields, but always maintain col-6 layout
+            $('#roundOffContainer').toggleClass('d-none', !roundOffChecked);
+            $('#dueContainer').toggleClass('d-none', !dueChecked);
+        }
+
+        function updateCustomer(){
+            $('#customerName').val(cart.customer.name);
+            $('#customerAddress').val(cart.customer.address);
+        }
+
+        // Togle round off and paid amount
+        $('#toggleRoundOff, #toggleDue').change(toggleFields);
+
+        // Barcode scanning and fetching product details
+        $('#barcodeSearch').on('input', function() {
+            let barcode = $(this).val();
+            if (barcode.length === 10) { // Ensure only 10-digit barcode triggers the request
+                $.ajax({
+                    url: '/get-product/',  // Replace with actual endpoint
+                    type: 'GET',
+                    data: { barcode: barcode },
+                    success: function(response) {
+                        if (response.success) {
+                            $('#productSummary').val(response.product_name);
+                            $('#amount').val(response.rate);
+                            $('#discountAmount').val(response.discount);
+                            $('#quantity').val(1);
+                        } else {
+                            alert('Product not found');
+                        }
+                    },
+                    error: function() {
+                        alert('Error fetching product details');
+                    }
+                });
+            }
+        });
+
+        // Move item to cart
+        $('#moveToCart').click(function() {
+            let productName = $('#productSummary').val();
+            let rate = parseFloat($('#amount').val());
+            let discount = parseFloat($('#discountAmount').val()) || 0;
+            let qty = parseInt($('#quantity').val());
+            let amount = (rate - discount) * qty;
+            let barcode = $('#barcodeSearch').val();
+
+            if (productName && rate && qty) {
+                check_discount_price(barcode, discount, function(isValid){
+                    if(!isValid){
+                        alert("Invalid discount! Discount is more higher than purchase price!.");
+                    }else{
+                        if (cart.items[barcode]) {
+                            cart.items[barcode].qty += qty;
+                            cart.items[barcode].amount = (rate - discount) * cart.items[barcode].qty;
+                        } else {
+                            cart.items[barcode] = { productName, rate, discount, qty, amount };
+                        }
+                        updateCart();
+                        clearFields();
+                    }
+                })
+            }
+
+            
+        });  
+
+        // If we want to edit a cart item
+        $(document).on('click', '.edit-item', function() {
+            let barcode = $(this).data('barcode');
+            let item = cart.items[barcode];
+            if (item) {
+                $('#barcodeSearch').val(barcode);
+                $('#productSummary').val(item.productName);
+                $('#amount').val(item.rate);
+                $('#discountAmount').val(item.discount);
+                $('#quantity').val(item.qty);
+                delete cart.items[barcode];
+                updateCart();
+            }
+        });
+
+        // Round off input handel
+        $('#roundOffInput').on('input', function() {
+            let roundOff = parseFloat($(this).val()) || 0;
+            cart.roundOff = roundOff; // Store in cart object
+            let originalTotal = Object.values(cart.items).reduce((sum, item) => sum + item.amount, 0);
+            let finalTotal = originalTotal - roundOff;
+            cart.totalAmount = finalTotal; // Update cart's totalAmount
+            $('#totalAmount').text(finalTotal.toFixed(2));
+            
+        });
+
+        // Paid amount handel
+        $('#paidInput').on('input', function() {
+            let paidAmount = parseFloat($(this).val()) || 0;
+            cart.paidAmount = paidAmount; // Store in cart object
+        });
+
+        // Check a custome already exist or not as well as checks it customer already have a cart item or not
+        $('#customerPhone').on('blur', function() {  
+            let phone = $(this).val();
+                        
+            if (phone.length == 10) {  
+                let drafts = JSON.parse(localStorage.getItem(phone)) || {};
+
+                if(Object.keys(drafts).length === 0){
+                    $.ajax({
+                        url: {% url "get_customer_by_phone" %},
+                        type: 'GET',
+                        data: { phone: phone },
+                        success: function(response) {
+                            if (response.success) {
+                                cart.customer.name = response.name;
+                                cart.customer.address = response.address;
+                                updateCustomer()
+                            } else {
+                                cart.customer.name = '';
+                                cart.customer.address = '';
+                                updateCustomer()
+                            }
+                        },
+                        error: function() {
+                            alert('Error fetching customer details.');
+                        }
+                    });
+                }else{
+                    cart = drafts;
+                    if(cart.roundOff >= 0 ){
+                        $("#toggleRoundOff").prop('checked', true);
+                        $("#roundOffInput").val(cart.roundOff);
+
+                    }
+                    if(cart.paidAmount){
+                        $("#toggleDue").prop('checked', true);
+                        $("#paidInput").val(cart.paidAmount);
+                    }
+                    updateCart()
+                    updateCustomer()
+                    toggleFields()
+                }
+            }
+        });
+        
+        // Store customer details in cart when input changes
+        $('#customerName, #customerPhone, #customerAddress').on('input', function() {
+            if ($(this).val().trim()) { 
+                cart.customer.name = $('#customerName').val();
+                cart.customer.phone = $('#customerPhone').val();
+                cart.customer.address = $('#customerAddress').val();
+            }
+        });
+
+        // To save the cart items into localStorage 
+        $('#btnDraft').click(function() {
+            localStorage.setItem(cart.customer.phone, JSON.stringify(cart));
+            alert("Cart saved for 24 hours!")
+        })
+    });
+</script>
+{% endblock  %}
