@@ -228,6 +228,26 @@
             $('#totalQty').text(totalQty);
             $('#totalAmount').text(cart.totalAmount.toFixed(2));
         }
+        function check_qty_availability(barcode, qty, callback){
+            $.ajax({
+                url: {% url "check_qty" %},
+                type: 'GET',
+                data: { qty: qty, barcode: barcode },
+                success: function(response) {
+                    if (response.success) {
+                        callback(true)
+                    }else{
+                        callback(false)
+                    }
+                },
+                error: function(error) {
+                    console.log(error)
+                    alert('Error fetching product details');
+                    callback(false)
+                }
+            })
+
+        }
 
         function check_discount_price(barcode, discount_amount, callback){
             $.ajax({
@@ -281,21 +301,10 @@
         }
 
         function updateRoundoffPayedAmmount(){
-            if(cart.roundOff > 0 ){
-                $("#toggleRoundOff").prop('checked', true);
-                $("#roundOffInput").val(cart.roundOff);
-
-            }else{
-                $("#toggleRoundOff").prop('checked', false);
-                $("#roundOffInput").val(cart.roundOff);
-            }
-            if(cart.paidAmount > 0){
-                $("#toggleDue").prop('checked', true);
-                $("#paidInput").val(cart.paidAmount);
-            }else{
-                $("#toggleDue").prop('checked', false);
-                $("#paidInput").val(cart.paidAmount);
-            }
+            $("#toggleRoundOff").prop('checked', false);
+            $("#roundOffInput").val(cart.roundOff);
+            $("#toggleDue").prop('checked', false);
+            $("#paidInput").val(cart.paidAmount);
 
             toggleFields()
         }
@@ -338,20 +347,29 @@
             let barcode = $('#barcodeSearch').val();
 
             if (productName && rate && qty) {
-                check_discount_price(barcode, discount, function(isValid){
-                    if(!isValid){
-                        alert("Invalid discount! Discount is more higher than purchase price!.");
+                check_qty_availability(barcode,qty, function(isQtyValid){
+                    if(!isQtyValid){
+                        alert("Quantity higher than stock availability!");
                     }else{
-                        if (cart.items[barcode]) {
-                            cart.items[barcode].qty += qty;
-                            cart.items[barcode].amount = (rate - discount) * cart.items[barcode].qty;
-                        } else {
-                            cart.items[barcode] = { productName, rate, discount, qty, amount };
-                        }
-                        updateCart();
-                        clearFields();
+                        check_discount_price(barcode, discount, function(isValid){
+                            if(!isValid){
+                                alert("Invalid discount! Discount is more higher than purchase price!.");
+                                error = true;
+                            }else{
+                                if (cart.items[barcode]) {
+                                    cart.items[barcode].qty += qty;
+                                    cart.items[barcode].amount = (rate - discount) * cart.items[barcode].qty;
+                                } else {
+                                    cart.items[barcode] = { productName, rate, discount, qty, amount };
+                                }
+                                updateCart();
+                                clearFields();
+                            }
+                        })
+
                     }
                 })
+                
             }
 
             
@@ -420,7 +438,6 @@
                     cart = drafts;
                     updateCart()
                     updateCustomer()
-                    updateRoundoffPayedAmmount()
                 }
             }
         });
@@ -436,6 +453,9 @@
 
         // To save the cart items into localStorage 
         $('#btnDraft').click(function() {
+            cart.roundOff = 0;
+            cart.paidAmount = 0;
+            cart.totalAmount = 0; 
             localStorage.setItem(cart.customer.phone, JSON.stringify(cart));
             cart = {
                 items: {},
@@ -448,6 +468,7 @@
             updateCart()
             updateCustomer()
             updateRoundoffPayedAmmount()
+            $("#roundOffBtn").prop("disabled", false);
             alert("Cart saved for 24 hours!")
         })
 

@@ -60,3 +60,19 @@ def check_discount(request):
         return JsonResponse({'success': True, 'message': 'Valid discount'})
     else:
         return JsonResponse({'success': False, 'message': 'Discount too high! Minimum 5% margin required.'})
+
+def check_qty(request):
+    qty = request.GET.get('qty', '')
+    barcode = request.GET.get('barcode', '')
+
+    try:
+        product = Product.objects.get(barcode=barcode)
+        if product.stock_quantity >= int(qty):
+            return JsonResponse({'success': True, 'message': 'Product available!'})
+        
+        return JsonResponse({'success': False, 'message': 'Quantity higher than stock availability!'})
+    except Product.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Product not found'})
+    
+
+    
