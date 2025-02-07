@@ -165,13 +165,14 @@
                     
                     <!-- Fixed Two-Column Input Fields -->
                     <div class="row mb-2 d-none" id="inputFields">
-                        <div class="col-md-6 d-none" id="roundOffContainer">
-                            <label for="roundOffInput">Round Off</label>
-                            <input type="text" class="form-control" id="roundOffInput">
+                        <div class="d-none coupon-container" id="roundOffContainer">
+                            <input type="text" placeholder="Round off" class="form-control coupon-input" id="roundOffInput">
+                            <button class="btn coupon-btn" id="roundOffBtn">✔</button>
                         </div>
-                        <div class="col-md-6 d-none" id="dueContainer">
-                            <label for="paidInput">Paid Amount</label>
-                            <input type="text" class="form-control" id="paidInput">
+
+                        <div class="ml-2 d-none coupon-container" id="dueContainer">
+                            <input type="text" placeholder="Paid Amount" class="form-control coupon-input" id="paidInput">
+                            <button class="btn coupon-btn" id="paidBtn">✔</button>
                         </div>
                     </div>
                     
@@ -185,6 +186,9 @@
     </div>
 </div>
 
+<input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+    
+
 {% endblock  %}
 {% block extra_script %}
 <script>
@@ -192,9 +196,10 @@
         let cart = {
             items: {},
             customer: {},
+            coupon: {},
             roundOff: 0,
             totalAmount: 0,
-            paidAmount: 0
+            paidAmount: 0,
         };
 
         function updateCart() {
@@ -368,19 +373,19 @@
         });
 
         // Round off input handel
-        $('#roundOffInput').on('input', function() {
-            let roundOff = parseFloat($(this).val()) || 0;
+        $('#roundOffBtn').on('click', function() {
+            let roundOff = parseFloat($('#roundOffInput').val()) || 0;
             cart.roundOff = roundOff; // Store in cart object
-            let originalTotal = Object.values(cart.items).reduce((sum, item) => sum + item.amount, 0);
-            let finalTotal = originalTotal - roundOff;
-            cart.totalAmount = finalTotal; // Update cart's totalAmount
+            finalTotal = cart.totalAmount - roundOff
+            cart.totalAmount = finalTotal
             $('#totalAmount').text(finalTotal.toFixed(2));
+            $(this).prop("disabled", true);
             
         });
 
         // Paid amount handel
-        $('#paidInput').on('input', function() {
-            let paidAmount = parseFloat($(this).val()) || 0;
+        $('#paidBtn').on('click', function() {
+            let paidAmount = parseFloat($("#paidInput").val()) || 0;
             cart.paidAmount = paidAmount; // Store in cart object
         });
 
@@ -435,6 +440,7 @@
             cart = {
                 items: {},
                 customer: {},
+                coupon: {},
                 roundOff: 0,
                 totalAmount: 0,
                 paidAmount: 0
@@ -447,18 +453,27 @@
 
         // Coupon code apply
         $('#checkCoupon').click(function() {
+            let csrfToken = $("#csrf_token").val();
             let couponCode = $('#couponCode').val().trim();
+            if (cart.coupon && cart.coupon.code) {
+                alert("Coupon already applied!");
+                return false;
+            }
         
             if (couponCode) {
                 $.ajax({
-                    url: '{% url "apply_coupon" %}', // Update with the actual endpoint
-                    type: 'POST',
+                    url: {% url "apply_coupon" %}, // Update with the actual endpoint
+                    type: "POST",
                     data: { coupon: couponCode, total_amount: cart.totalAmount },
+                    headers: { "X-CSRFToken": csrfToken },
                     success: function(response) {
-                        if (response.valid) {
-                            $('#couponStatus').text('Coupon Applied');
+                        if (response.success) {
+                            cart.coupon = {"code":couponCode, "amount": response.discount_amount};
+                            cart.totalAmount = response.final_amount;
+                            $('#totalAmount').text(response.final_amount);
+                            $('#couponStatus').removeClass('text-danger').text(response.message).addClass('text-success');
                         } else {
-                            $('#couponStatus').text('Invalid Coupon').addClass('text-danger');
+                            $('#couponStatus').removeClass('text-success').text(response.message).addClass('text-danger');
                         }
                     },
                     error: function() {

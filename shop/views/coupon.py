@@ -7,7 +7,7 @@ from shop.models.customer import Coupon, CustomerCoupon
 from django.contrib import messages
 
 def view_coupon(request):
-    coupons = Coupon.objects.filter(is_active=True, expiry_date__gt=now())
+    coupons = Coupon.objects.filter(is_active=True)
     return render(request, 'shop/coupon/index.html', {'coupons': coupons})
 
 def add_coupon(request):
@@ -99,29 +99,38 @@ def edit_coupon(request, coupon_id):
 
 def apply_coupon(request):
     if request.method == "POST":
-        coupon_code = request.POST.get("coupon_code", "").strip()
+        coupon_code = request.POST.get("coupon", "").strip()
         
         try:
             total_amount = Decimal(request.POST.get("total_amount", "0"))
         except ValueError:
-            return JsonResponse({"status": "error", "message": "Invalid total amount"}, status=400)
+            return JsonResponse({"success": "error", "message": "Invalid total amount"})
 
         # Validate input
         if not coupon_code or total_amount <= 0:
-            return JsonResponse({"status": "error", "message": "Invalid input"}, status=400)
+            return JsonResponse({"success": False, "message": "Invalid input"})
 
         # Check if the coupon exists and is active
         coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
         if not coupon:
-            return JsonResponse({"status": "error", "message": "Invalid or inactive coupon"}, status=400)
+            print(coupon)
+            return JsonResponse({"success": False, "message": "Invalid or inactive coupon"})
 
         # Check if the coupon is expired
         if coupon.expiry_date <= now():
-            return JsonResponse({"status": "error", "message": "Coupon has expired"}, status=400)
-
+            return JsonResponse({"success": False, "message": "Coupon has expired"})
+        
+        # Check if the order total meets the minimum requirement for the coupon
+        if total_amount < coupon.minium_order:
+            return JsonResponse({
+                "success": False,
+                "message": f"Order price should be higher than ₹{coupon.minium_order}"
+            })
+        
         # Check if the coupon has already been used
         if CustomerCoupon.objects.filter(coupon=coupon, is_used=True).exists():
-            return JsonResponse({"status": "error", "message": "Coupon already used by"}, status=400)
+            return JsonResponse({"success": False, "message": "Coupon already used by"})
+        
 
         # Calculate discount amount
         if coupon.discount_type == "flat":
@@ -135,11 +144,11 @@ def apply_coupon(request):
         final_amount = total_amount - discount_amount
 
         return JsonResponse({
-            "status": "success",
-            "message": "Coupon applied successfully",
+            "success": True,
+            "message": f"₹ {str(discount_amount.quantize(Decimal('0.01')))} Coupon applied!",
             "discount_type": coupon.discount_type,
             "discount_amount": str(discount_amount.quantize(Decimal('0.01'))),
             "final_amount": str(final_amount.quantize(Decimal('0.01')))
         })
 
-    return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+    return JsonResponse({"success": False, "message": "Invalid request method"})
