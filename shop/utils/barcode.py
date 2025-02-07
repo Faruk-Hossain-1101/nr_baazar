@@ -5,7 +5,7 @@ from barcode.writer import ImageWriter
 from PIL import Image, ImageDraw, ImageFont
 from django.contrib.staticfiles import finders
 
-def create_label(SKU, barcode_value, size, price, color=None, cell=None):
+def create_label(SKU, barcode_value, size, price, selling_price, color=None, cell=None):
     # Define label dimensions (38x25mm in pixels, assuming 300 DPI for high quality)
     label_width = 38 * 11.811  # 38mm to pixels (1mm = 11.811 pixels at 300 DPI)
     label_height = 25 * 11.811  # 25mm to pixels (1mm = 11.811 pixels at 300 DPI)
@@ -35,7 +35,7 @@ def create_label(SKU, barcode_value, size, price, color=None, cell=None):
     except IOError:
         font = ImageFont.load_default()
     try:
-        price_font = ImageFont.truetype(static_font_path, 40)  # Bold font for other text
+        price_font = ImageFont.truetype(static_font_path, 35)  # Bold font for other text
     except IOError:
         price_font = ImageFont.load_default()
 
@@ -55,8 +55,16 @@ def create_label(SKU, barcode_value, size, price, color=None, cell=None):
     if color:
         y_offset += 45  # Increased offset for larger text
         draw.text((5, y_offset), f"Color: {color}", font=font, fill="black")
-    y_offset += 45  # Increased offset for larger text
-    draw.text((5, y_offset), f"Price: {price}", font=price_font, fill="black")
+
+    if price > selling_price:
+        y_offset += 45  # Increased offset for larger text
+        draw.text((5, y_offset), f"Price: {price}", font=price_font, fill="black")
+        y_offset += 45  # Increased offset for larger text
+        draw.text((5, y_offset), f"Offer Price: {selling_price}", font=price_font, fill="black")
+    else:
+        y_offset += 45  # Increased offset for larger text
+        draw.text((5, y_offset), f"Price: {price}", font=price_font, fill="black")
+
     
     # Generate barcode (24x8mm, convert to pixels for 300 DPI)
     barcode_generator = barcode.get_barcode_class('code128')  # Choose barcode type

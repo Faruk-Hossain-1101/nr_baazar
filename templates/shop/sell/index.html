@@ -1,5 +1,59 @@
 {% extends "base.html" %}
 
+{% block extra_style %}
+<style>
+    /* Coupon Input Container */
+    .coupon-container {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    /* Input Field */
+    .coupon-input {
+        padding-right: 45px; /* Space for the button inside */
+        border: 1.5px solid #5600ff47;
+        border-radius: 25px;
+        height: 45px;
+        font-size: 16px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Button Inside the Input */
+    .coupon-btn {
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #5600ff96;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 35px;
+        height: 35px;
+        font-size: 18px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: 0.3s;
+    }
+
+    .coupon-btn:hover {
+        background: #5600ff96;
+        transform: translateY(-50%) scale(1.1);
+    }
+
+    /* Applied Coupon Status */
+    #couponStatus {
+        font-size: 16px;
+        font-weight: bold;
+        margin-left: 10px;
+    }
+
+</style>
+
+{% endblock %}
 {% block content %}
 <div class="container-fluid">
     <!-- Customer Details Row -->
@@ -83,6 +137,18 @@
                             </tr>
                         </tfoot>
                     </table>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="coupon-container">
+                                <input type="text" class="form-control coupon-input" id="couponCode" placeholder="Enter Coupon Code">
+                                <button class="btn coupon-btn" id="checkCoupon">✔</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <span id="couponStatus" class="text-success"></span>
+                        </div>
+                    </div>
                     
                     <div class="row mb-2">
                         <div class="col-md-6 align-items-center">
@@ -204,8 +270,29 @@
         }
 
         function updateCustomer(){
+            $('#customerPhone').val(cart.customer.phone);
             $('#customerName').val(cart.customer.name);
             $('#customerAddress').val(cart.customer.address);
+        }
+
+        function updateRoundoffPayedAmmount(){
+            if(cart.roundOff > 0 ){
+                $("#toggleRoundOff").prop('checked', true);
+                $("#roundOffInput").val(cart.roundOff);
+
+            }else{
+                $("#toggleRoundOff").prop('checked', false);
+                $("#roundOffInput").val(cart.roundOff);
+            }
+            if(cart.paidAmount > 0){
+                $("#toggleDue").prop('checked', true);
+                $("#paidInput").val(cart.paidAmount);
+            }else{
+                $("#toggleDue").prop('checked', false);
+                $("#paidInput").val(cart.paidAmount);
+            }
+
+            toggleFields()
         }
 
         // Togle round off and paid amount
@@ -326,18 +413,9 @@
                     });
                 }else{
                     cart = drafts;
-                    if(cart.roundOff >= 0 ){
-                        $("#toggleRoundOff").prop('checked', true);
-                        $("#roundOffInput").val(cart.roundOff);
-
-                    }
-                    if(cart.paidAmount){
-                        $("#toggleDue").prop('checked', true);
-                        $("#paidInput").val(cart.paidAmount);
-                    }
                     updateCart()
                     updateCustomer()
-                    toggleFields()
+                    updateRoundoffPayedAmmount()
                 }
             }
         });
@@ -354,8 +432,44 @@
         // To save the cart items into localStorage 
         $('#btnDraft').click(function() {
             localStorage.setItem(cart.customer.phone, JSON.stringify(cart));
+            cart = {
+                items: {},
+                customer: {},
+                roundOff: 0,
+                totalAmount: 0,
+                paidAmount: 0
+            };
+            updateCart()
+            updateCustomer()
+            updateRoundoffPayedAmmount()
             alert("Cart saved for 24 hours!")
         })
+
+        // Coupon code apply
+        $('#checkCoupon').click(function() {
+            let couponCode = $('#couponCode').val().trim();
+        
+            if (couponCode) {
+                $.ajax({
+                    url: '{% url "apply_coupon" %}', // Update with the actual endpoint
+                    type: 'POST',
+                    data: { coupon: couponCode, total_amount: cart.totalAmount },
+                    success: function(response) {
+                        if (response.valid) {
+                            $('#couponStatus').text('Coupon Applied');
+                        } else {
+                            $('#couponStatus').text('Invalid Coupon').addClass('text-danger');
+                        }
+                    },
+                    error: function() {
+                        alert('Error checking coupon validity.');
+                    }
+                });
+            } else {
+                alert('Please enter a coupon code.');
+            }
+        });
+        
     });
 </script>
 {% endblock  %}

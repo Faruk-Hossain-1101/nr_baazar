@@ -48,6 +48,12 @@
                     <span>Dashboard</span></a>
             </li>
 
+            <li class="nav-item">
+                <a class="nav-link" href="{% url "sell" %}">
+                    <i class="fas fa-hand-holding-heart"></i>
+                    <span>Sell</span></a>
+            </li>
+
             <!-- Nav Item - Utilities Collapse Menu -->
             <li class="nav-item">
                 <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
@@ -58,16 +64,27 @@
                 <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
                     data-parent="#accordionSidebar">
                     <div class="bg-white py-2 collapse-inner rounded">
-                        <a class="collapse-item" href="{% url "add_product" %}">Add</a>
-                        <a class="collapse-item" href="{% url "view_product" %}">View</a>
+                        <a class="collapse-item" href="{% url "add_product" %}">Add Product</a>
+                        <a class="collapse-item" href="{% url "view_product" %}">View Product</a>
+                        <a class="collapse-item" href="{% url "show_barcode_data" %}">Barcode</a>
                     </div>
                 </div>
             </li>
 
+            <!-- Nav Item - Utilities Collapse Menu -->
             <li class="nav-item">
-                <a class="nav-link" href="{% url "sell" %}">
-                    <i class="fas fa-hand-holding-heart"></i>
-                    <span>Sell</span></a>
+                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCoupon"
+                    aria-expanded="true" aria-controls="collapseCoupon">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Coupon</span>
+                </a>
+                <div id="collapseCoupon" class="collapse" aria-labelledby="headingUtilities"
+                    data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <a class="collapse-item" href="{% url "add_coupon" %}">Add Coupon</a>
+                        <a class="collapse-item" href="{% url "view_coupon" %}">View Coupon</a>
+                    </div>
+                </div>
             </li>
 
             <!-- Nav Item - Tables -->

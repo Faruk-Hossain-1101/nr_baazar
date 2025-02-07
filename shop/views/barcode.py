@@ -1,4 +1,5 @@
-from django.shortcuts import render, HttpResponse
+from django.shortcuts import render
+from django.http import JsonResponse
 from shop.models.product import Product
 
 def print_labels(p_ids):
@@ -32,8 +33,18 @@ def print_labels(p_ids):
     return label_pairs
 
 
-def print_barcode(request):
-    # Get product IDs from the query string
-    product_ids = request.GET.get('products', '').split(',')
+def show_barcode_data(request):
+    products = Product.objects.all().order_by('-id')
+    return render(request, 'shop/barcode/index.html', {'products': products} )
 
-    return render(request, 'shop/barcode_printing.html', {"label_pairs": print_labels(product_ids)})
+def preview_barcode(request):
+    product_ids = request.GET.get('products', '').split(',')
+    # Get product IDs from the query string
+    return render(request, 'shop/barcode/barcode_preview.html', {"label_pairs": print_labels(product_ids), "p_ids": product_ids})
+
+def print_barcode(request):
+    p_ids = request.GET.get('p_ids').split(", ")
+    for id in p_ids:
+        Product.objects.filter(id=id).update(is_printed=True)
+
+    return JsonResponse({"success": True, "message":"Printing Completed"})

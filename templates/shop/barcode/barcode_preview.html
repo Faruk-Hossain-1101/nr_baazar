@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -115,4 +116,26 @@
     </div>
 
 </body>
+<script src="{% static 'js/vendor/jquery-3.3.1.min.js' %}"></script>
+<script>
+window.onafterprint = function() {
+    var pIds = '{{ p_ids|join:", " }}';
+    $.ajax({
+        url: {% url "print_barcode" %},
+        type: "GET",
+        data: {p_ids: pIds },
+        success: function(response){
+            if(response.success){
+                window.location.href = `/show-barcode-data/`
+            }else{
+                alert("Something went wrong!")
+            }
+        },
+        error: function(error){
+            console.log(error)
+        }
+
+    })
+};
+</script>
 </html>

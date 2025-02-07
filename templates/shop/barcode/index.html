@@ -29,34 +29,58 @@
     <!-- DataTables Example -->
     <div class="card shadow mb-4">
         <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary d-inline-block">Product List</h6>
+            <div class="row w-100">
+                <!-- First Column: Product List Title -->
+                <div class="col-md-6">
+                    <h6 class="m-0 font-weight-bold text-primary">Product List</h6>
+                </div>
+        
+                <!-- Second Column: Barcode Size Select and Print Button -->
+                <div class="col-md-6 d-flex justify-content-end">
+                    <!-- Barcode Size Select -->
+                    <div class="col-6 mb-2">
+                        <select id="barcodeSize" class="form-control">
+                            <option value="38x25_2up">38x25_2up</option>
+                            <option value="50x50_2up">50x50_2up</option>
+                        </select>
+                    </div>
+        
+                    <!-- Print Barcode Button -->
+                    <button id="printBarcode" class="btn btn-success btn-sm" style="height:35px;">Print Barcode</button>
+                </div>
+            </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-bordered" id="productTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="selectAll"></th>
                             <th>ID</th>
                             <th>Product Name</th>
                             <th>Quantity</th>
                             <th>SKU</th>
                             <th>Actual Price</th>
                             <th>Selling Price</th>
-                            <th>Action</th>
+                            <th>Is Printed</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for product in products %}
                         <tr>
+                            <td><input type="checkbox" class="product-checkbox" value="{{ product.id }}"></td>
                             <td>{{ product.id }}</td>
                             <td>{{ product.name }}</td>
                             <td>{{ product.stock_quantity }}</td>
                             <td>{{ product.sku }}</td>
                             <td>{{ product.actual_price }}</td>
                             <td>{{ product.selling_price }}</td>
-                            <td>
-                                <!-- Edit Button linking to the edit view -->
-                                <a href="{% url 'edit_product' product.id %}" class="btn btn-primary btn-sm">Edit</a>
+                            <td class="text-center">
+                            {% if product.is_printed %}
+                                <i class="fas fa-check-circle" style="color: green;"></i> <!-- Tick icon -->
+                            {% else %}
+                                <i class="fas fa-times-circle" style="color: red;"></i> <!-- Cross icon -->
+                            {% endif %}
                             </td>
                         </tr>
                         {% endfor %}
@@ -82,6 +106,25 @@
             "info": true,
             "autoWidth": false,
             "order": [[0, 'desc']] 
+        });
+
+        $("#selectAll").on("change", function () {
+            $(".product-checkbox").prop("checked", $(this).prop("checked"));
+        });
+    
+        $("#printBarcode").on("click", function () {
+            let selectedProducts = [];
+            $(".product-checkbox:checked").each(function () {
+                selectedProducts.push($(this).val());
+            });
+    
+            if (selectedProducts.length === 0) {
+                alert("Please select at least one product to print the barcode.");
+                return;
+            }
+    
+            // Redirect to the barcode printing view with selected product IDs
+            window.location.href = `/preview-barcode/?products=${selectedProducts.join(",")}`;
         });
     });
 </script>

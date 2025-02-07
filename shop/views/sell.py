@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from shop.models.product import Product
 from decimal import Decimal
+from django.utils.timezone import now
+from shop.models.product import Product
+from shop.models.customer import Coupon, Customer, CustomerCoupon
 
 
 def index(request):

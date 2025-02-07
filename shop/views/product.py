@@ -25,6 +25,12 @@ def generate_sku(product_name):
 
     return sku
 
+def view_product(request):
+    if request.method == "GET":
+        products = Product.objects.all().order_by('-id')
+        return render(request, 'shop/view_product.html', {'products': products})
+    
+
 def add_product(request):
     if request.method == 'POST':
         # Retrieve and sanitize input data
@@ -115,7 +121,7 @@ def add_product(request):
             product.save()
 
             # Generate barcode label
-            create_label(sku, barcode, size, actual_price, color, cell)
+            create_label(sku, barcode, size, actual_price, selling_price, color, cell)
 
             # Success message
             messages.success(request, f"{sku} - {stock_quantity} units added successfully!")
@@ -126,11 +132,7 @@ def add_product(request):
 
     return render(request, 'shop/add_product.html')
 
-def view_product(request):
-    if request.method == "GET":
-        products = Product.objects.all().order_by('-id')
-        return render(request, 'shop/view_product.html', {'products': products})
-    
+
 def edit_product(request, id):
     product = get_object_or_404(Product, id=id)
 
@@ -213,7 +215,7 @@ def edit_product(request, id):
             product.save()
 
             # Generate a new barcode label
-            create_label(sku, barcode, size, actual_price, color, cell)
+            create_label(sku, barcode, size, actual_price, selling_price, color, cell)
 
             # Success message
             messages.success(request, f'{sku} - Product updated successfully.')

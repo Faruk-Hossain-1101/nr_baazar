@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.timezone import now
 
 class Customer(models.Model):
     name = models.CharField(max_length=100, blank=True, null=True)
@@ -17,12 +18,19 @@ class Coupon(models.Model):
     code = models.CharField(max_length=25, unique=True)
     discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    max_discount = models.DecimalField(max_digits=10, decimal_places=2)
+    max_discount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     is_active = models.BooleanField(default=True)
+    minium_order = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     expiry_date = models.DateTimeField()
 
+    def is_valid(self):
+        """Check if the coupon is active and not expired"""
+        return self.is_active and self.expiry_date > now()
+
+
     def __str__(self):
-        return self.code
+        return f"{self.code} ({'Active' if self.is_valid() else 'Expired'})"
+   
     
 class CustomerCoupon(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
@@ -30,4 +38,4 @@ class CustomerCoupon(models.Model):
     is_used = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.customer.name} - {self.coupon.code}"
+        return f"{self.customer.name or 'Unknown'} - {self.coupon.code} ({'Used' if self.is_used else 'Not Used'})"
