@@ -18,6 +18,7 @@ urlpatterns = [
     path('get-product/', sell.get_product_details, name='get_product_details'),
     path('check-discount/', sell.check_discount, name='check_discount'),
     path('check-qty/', sell.check_qty, name='check_qty'),
+    path('show-invoice/', sell.show_invoice, name='show_invoice'),
 
     # Coupon
     path('apply-coupon/', coupon.apply_coupon, name='apply_coupon'),

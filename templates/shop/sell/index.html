@@ -178,7 +178,7 @@
                     
                     <div class="text-right">
                         <button class="btn btn-warning btn-sm" id="btnDraft" >Draft</button>
-                        <button class="btn btn-success btn-sm">Purchase</button>
+                        <button class="btn btn-success btn-sm" id="purchaseBtn">Purchase</button>
                     </div>
                 </div>
             </div>
@@ -505,6 +505,30 @@
                 alert('Please enter a coupon code.');
             }
         });
+
+        $("#purchaseBtn").click(function(){
+            let csrf_token = $("#csrf_token").val()
+            
+            if(!totalAmount || Object.keys(cart.items).length <= 0){ 
+                alert("At list one product required!")
+                return false;
+            }
+            $.ajax({
+                url: {% url "show_invoice" %},
+                type: "POST",
+                data: JSON.stringify({'cart': cart}),
+                headers: {'X-CSRFToken': csrf_token},
+                success: function(response){
+                    if(response.success){
+                        window.location.href = '/show-invoice/';
+                    }
+
+                },
+                error: function(error){
+                    console.log(error)
+                }
+            })
+        })
         
     });
 </script>

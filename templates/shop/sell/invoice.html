@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% block extra_style %}
+<style>
+    .invoice-container {
+        font-family: Arial, sans-serif;
+        width: 4in; /* Set width to 4 inches */
+        margin: 0 auto;
+        padding: 5px;
+        font-size: 9px;
+        background-color: #fff;
+      }
+      
+      .shop-details {
+        text-align: center;
+      }
+      
+      .shop-name {
+        font-size: 12px;
+        margin-bottom: 0px;
+        font-weight: bold;
+      }
+      
+      .due-paid h3 {
+        font-size: 15px;
+        margin-bottom: 0px;
+        font-weight: bold;
+      }
+      
+      .shop-details p {
+        margin-top: 1px;
+        margin-bottom: 0px;
+      }
+      
+      h4 {
+        font-size: 10px;
+        margin: 0px;
+        font-weight: bold;
+      }
+      
+      table {
+        width: 100%;
+        text-align: center;
+        font-size: 8px;
+        border-collapse: collapse;
+      }
+      
+      table th, table td {
+        padding: 5px !important;
+        border: 1px solid #ddd;
+      }
+      
+      table th {
+        background-color: #f2f2f2;
+      }
+      
+      table td:nth-child(1) {
+        width: 8%;
+      }
+      
+      table td:nth-child(2) {
+        width: 50%;
+      }
+      
+      table td:nth-child(3), table td:nth-child(4), table td:nth-child(5), table td:nth-child(6) {
+        width: 8%;
+      }
+      
+      hr {
+        border-top: 1px dashed #000;
+        margin-top: 1px;
+        margin-bottom: 1px;
+      }
+      
+      .total {
+        font-size: 10px;
+        text-align: right;
+        margin-top: 2px;
+      }
+      
+      .payment-status {
+        font-size: 9px;
+        text-align: center;
+        margin-top: 1px;
+      }
+      
+      .thank-you {
+        font-size: 10px;
+        text-align: center;
+        margin-top: 2px;
+      }
+      
+      .payment-status p {
+        margin: 0px;
+      }
+      
+      p {
+        margin: 0px;
+      }
+      
+      /* Apply custom class to eliminate margins */
+      .no-margin {
+        margin: 0px !important;
+      }
+
+
+    @media print {
+        /* Hide all content on the page except the invoice */
+        body * {
+            visibility: hidden;
+        }
+        
+        /* Show only the content within the invoice-container */
+        .invoice-container, .invoice-container * {
+            visibility: visible;
+            margin: 0;
+        }
+        .btn-primary{
+            visibility: hidden;
+        }
+        
+        /* Optional: Styling adjustments for print layout */
+        @page {
+            size: auto;  /* 4 inches width, height will be auto-adjusted based on content */
+            margin: 0;        /* Remove extra white space around the content */
+        }
+
+
+        
+    }
+          
+
+
+      
+      
+</style>
+{% endblock  %}
+
+{% block content %}
+  <div class="container">
+    <div class="invoice-container">
+      <!-- Shop Details -->
+      <div class="shop-details text-center">
+        <h3 class="shop-name">NR BAAZAR</h3>
+        <p>SH11, Gokarna, Murshidabad</p>
+        <p>Phone No: +91-9134437801</p>
+      </div>
+
+      <!-- Invoice Number and Date -->
+      <div class="invoice-info no-margin" style="display: flex; justify-content: space-between;">
+        <p>Invoice No: {{ invoice_number }}</p>
+        <p>Date: {{ date }}</p>
+      </div>
+      <hr>
+      <h4 class="text-center">Receipt</h4>
+      <hr>
+
+      <!-- Table for Items -->
+      <table class="table no-margin">
+        <thead>
+          <tr>
+            <th>SL</th>
+            <th>Item</th>
+            <th>Rate/Unit</th>
+            <th>Qty</th>
+            <th>Discount</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in cart_data.items %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ item.productName}}</td>
+            <td>{{ item.rate}}</td>
+            <td>{{ item.qty}}</td>
+            <td>{{ item.discount}}</td>
+            <td>{{ item.amount}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Total Section -->
+      <div class="total">
+        <div style="display: flex; justify-content: space-between;">
+          <p>Total</p>
+          <p>{{ cart_data.totalAmount }}</p>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <p>Coupon Discount</p>
+          <p>{{ cart_data.coupon}}}</p>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <p>Discount</p>
+          <p>{{ total_discount }}</p>
+        </div>
+        <hr>
+        <div style="display: flex; justify-content: space-between;">
+          <p><strong>Grand Total</strong></p>
+          <p><strong>{{ grand_total }}</strong></p>
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- Paid and Due Section -->
+      <div class="due-paid" style="display: flex; justify-content: space-between;">
+        <h3>Paid</h3>
+        <h3>Cash</h3>
+      </div>
+      <div class="due-paid" style="display: flex; justify-content: space-between;">
+        <h3>Due</h3>
+        <h3>300</h3>
+      </div>
+
+      <hr>
+
+      <!-- Thank You Section -->
+      <p class="thank-you text-center">
+        <strong>Thank You!</strong><br>
+        Concern: If you want to return or exchange the product, it will be exchanged within 7 days of purchase.
+      </p>
+      
+      <!-- Print Button -->
+      <div class="text-center mt-4">
+        <button class="btn btn-primary"  onclick="window.print()">Print Invoice</button>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+{% block extra_script %}
+
+{% endblock %}

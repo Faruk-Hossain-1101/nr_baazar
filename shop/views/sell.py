@@ -1,3 +1,5 @@
+import json
+import uuid
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -5,7 +7,17 @@ from decimal import Decimal
 from django.utils.timezone import now
 from shop.models.product import Product
 from shop.models.customer import Coupon, Customer, CustomerCoupon
+from datetime import datetime, timedelta
+from shop.models.order import Order
 
+
+def generate_invoice_number():
+    # Generate a unique invoice number using UUID
+    no = f"NRB-{uuid.uuid4().hex.upper()[:8]}"
+    if Order.objects.filter(order_number=no):
+        return generate_invoice_number()
+
+    return no
 
 def index(request):
     return render(request, 'shop/sell/index.html')
@@ -75,4 +87,46 @@ def check_qty(request):
         return JsonResponse({'success': False, 'message': 'Product not found'})
     
 
+def show_invoice(request):
+    cart_data = request.session.get("cart", {})
+    
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        cart = data.get('cart', {})
+        
+        # You can store the cart in session if needed
+        request.session['cart'] = cart
+        
+        # Return a JSON response to confirm the cart update
+        return JsonResponse({'success': True, 'cart': cart})
+    
+    # Get the current UTC time and adjust for Kolkata timezone (UTC+5:30)
+    current_time_utc = datetime.utcnow()
+    kolkata_time = current_time_utc + timedelta(hours=5, minutes=30)
+
+    for item in cart_data.get('items'):
+        print(type(item))
+    # Calculate total discount (discount * quantity for each item)
+    item_discount = sum((item.get('discount', 0) * item.get('qty', 1)) for item in cart_data.get('items', []))
+    total_discount = item_discount + cart_data.get('roundOff', 0)
+
+    # Get total amount after discount
+    total_amount = cart_data.get("totalAmount", 0)
+    coupon_discount = cart_data.get("coupon", 0)
+
+    # Calculate grand total after all discounts
+    grand_total = total_amount - (total_discount + coupon_discount)
+
+    # Generate unique invoice number and formatted date-time
+    invoice_number = generate_invoice_number()
+    formatted_date = kolkata_time.strftime('%d/%m/%Y')
+    context = {
+        "cart_data": cart_data,
+        "total_discount": total_discount,
+        "grand_total": grand_total,
+        "invoice_no": invoice_number,
+        "invoice_date": formatted_date
+    }
+
+    return render(request, "shop/sell/invoice.html", context)
     
