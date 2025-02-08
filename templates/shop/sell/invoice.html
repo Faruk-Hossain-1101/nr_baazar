@@ -107,6 +107,18 @@
         /* Hide all content on the page except the invoice */
         body * {
             visibility: hidden;
+            max-width: 4in;
+        }
+
+        .sidebar {
+            display: none;
+        }
+        .container{
+          min-width: auto !important;
+          max-width: 4in !important;
+          padding-left: 4px !important;
+          padding-right: 4px !important;
+          margin: 0;
         }
         
         /* Show only the content within the invoice-container */
@@ -114,6 +126,7 @@
             visibility: visible;
             margin: 0;
         }
+        
         .btn-primary{
             visibility: hidden;
         }
@@ -147,8 +160,8 @@
 
       <!-- Invoice Number and Date -->
       <div class="invoice-info no-margin" style="display: flex; justify-content: space-between;">
-        <p>Invoice No: {{ invoice_number }}</p>
-        <p>Date: {{ date }}</p>
+        <p>Invoice No: {{ invoice_no }}</p>
+        <p>Date: {{ invoice_date }}</p>
       </div>
       <hr>
       <h4 class="text-center">Receipt</h4>
@@ -161,8 +174,8 @@
             <th>SL</th>
             <th>Item</th>
             <th>Rate/Unit</th>
-            <th>Qty</th>
             <th>Discount</th>
+            <th>Qty</th>
             <th>Amount</th>
           </tr>
         </thead>
@@ -172,32 +185,39 @@
             <td>{{ forloop.counter }}</td>
             <td>{{ item.productName}}</td>
             <td>{{ item.rate}}</td>
-            <td>{{ item.qty}}</td>
             <td>{{ item.discount}}</td>
+            <td>{{ item.qty}}</td>
             <td>{{ item.amount}}</td>
           </tr>
           {% endfor %}
         </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4" class="text-right"><strong>Total</strong></td>
+            <td><strong>{{ total_item }}</strong></td>
+            <td><strong>{{ total_amount }}</strong></td>
+          </tr>
+        </tfoot>
       </table>
 
       <!-- Total Section -->
       <div class="total">
-        <div style="display: flex; justify-content: space-between;">
-          <p>Total</p>
-          <p>{{ cart_data.totalAmount }}</p>
-        </div>
+        {% if coupon_discount > 0 %}
         <div style="display: flex; justify-content: space-between;">
           <p>Coupon Discount</p>
-          <p>{{ cart_data.coupon}}}</p>
+          <p>{{ coupon_discount }}</p>
         </div>
+        {% endif %}
+        {% if total_discount > 0 %}
         <div style="display: flex; justify-content: space-between;">
           <p>Discount</p>
           <p>{{ total_discount }}</p>
         </div>
+        {% endif %}
         <hr>
         <div style="display: flex; justify-content: space-between;">
           <p><strong>Grand Total</strong></p>
-          <p><strong>{{ grand_total }}</strong></p>
+          <p><strong>₹{{ grand_total }}</strong></p>
         </div>
       </div>
 

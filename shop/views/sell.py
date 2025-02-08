@@ -104,18 +104,32 @@ def show_invoice(request):
     current_time_utc = datetime.utcnow()
     kolkata_time = current_time_utc + timedelta(hours=5, minutes=30)
 
-    for item in cart_data.get('items'):
-        print(type(item))
+
+    total_item = 0
+    item_discount = Decimal(0)  # Using Decimal for item_discount
+
     # Calculate total discount (discount * quantity for each item)
-    item_discount = sum((item.get('discount', 0) * item.get('qty', 1)) for item in cart_data.get('items', []))
-    total_discount = item_discount + cart_data.get('roundOff', 0)
+    for item in cart_data.get('items', []):
+        # Calculate the discount for the current item (discount * qty)
+        item_discount += Decimal(item.get('discount', 0)) * int(item.get('qty', 1))
+        # Calculate the total quantity of items
+        total_item += int(item.get('qty', 1))
+
+    total_discount = item_discount + Decimal(cart_data.get('roundOff', 0))
 
     # Get total amount after discount
-    total_amount = cart_data.get("totalAmount", 0)
-    coupon_discount = cart_data.get("coupon", 0)
+    total_amount = Decimal(cart_data.get("totalAmount", 0))
+    coupon_discount = Decimal(cart_data.get('coupon', '').get('amount', 0))
 
     # Calculate grand total after all discounts
     grand_total = total_amount - (total_discount + coupon_discount)
+
+     # Quantize all amounts to two decimal places
+    total_discount = total_discount.quantize(Decimal('0.00'))
+    grand_total = grand_total.quantize(Decimal('0.00'))
+    total_amount = total_amount.quantize(Decimal('0.00'))
+    coupon_discount = coupon_discount.quantize(Decimal('0.00'))
+
 
     # Generate unique invoice number and formatted date-time
     invoice_number = generate_invoice_number()
@@ -124,6 +138,9 @@ def show_invoice(request):
         "cart_data": cart_data,
         "total_discount": total_discount,
         "grand_total": grand_total,
+        "total_amount": total_amount,
+        "coupon_discount": coupon_discount,
+        "total_item": total_item,
         "invoice_no": invoice_number,
         "invoice_date": formatted_date
     }

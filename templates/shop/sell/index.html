@@ -194,7 +194,7 @@
 <script>
     $(document).ready(function() {
         let cart = {
-            items: {},
+            items: [],
             customer: {},
             coupon: {},
             roundOff: 0,
@@ -208,8 +208,7 @@
             let cartHtml = '';
             let index = 1;
 
-            for (let key in cart.items) {
-                let item = cart.items[key];
+            cart.items.forEach((item) => {
                 totalQty += item.qty;
                 totalAmount += item.amount;
                 cartHtml += `<tr>
@@ -219,15 +218,16 @@
                     <td>${item.discount.toFixed(2)}</td>
                     <td>${item.qty}</td>
                     <td>${item.amount.toFixed(2)}</td>
-                    <td><button class="btn btn-sm btn-warning edit-item" data-barcode="${key}"><<</button></td>
+                    <td><button class="btn btn-sm btn-warning edit-item" data-barcode="${item.barcode}"><<</button></td>
                 </tr>`;
-            }
+            });
 
             cart.totalAmount = totalAmount - cart.roundOff;
             $('#cartItems').html(cartHtml);
             $('#totalQty').text(totalQty);
             $('#totalAmount').text(cart.totalAmount.toFixed(2));
         }
+
         function check_qty_availability(barcode, qty, callback){
             $.ajax({
                 url: {% url "check_qty" %},
@@ -246,7 +246,6 @@
                     callback(false)
                 }
             })
-
         }
 
         function check_discount_price(barcode, discount_amount, callback){
@@ -267,7 +266,6 @@
                     callback(false)
                 }
             })
-
         }
 
         function clearFields() {
@@ -305,6 +303,9 @@
             $("#roundOffInput").val(cart.roundOff);
             $("#toggleDue").prop('checked', false);
             $("#paidInput").val(cart.paidAmount);
+
+            $("#couponCode").val('')
+            $("#couponStatus").text("")
 
             toggleFields()
         }
@@ -347,74 +348,70 @@
             let barcode = $('#barcodeSearch').val();
 
             if (productName && rate && qty) {
-                check_qty_availability(barcode,qty, function(isQtyValid){
-                    if(!isQtyValid){
+                check_qty_availability(barcode, qty, function(isQtyValid){
+                    if (!isQtyValid) {
                         alert("Quantity higher than stock availability!");
-                    }else{
+                    } else {
                         check_discount_price(barcode, discount, function(isValid){
-                            if(!isValid){
+                            if (!isValid) {
                                 alert("Invalid discount! Discount is more higher than purchase price!.");
-                                error = true;
-                            }else{
-                                if (cart.items[barcode]) {
-                                    cart.items[barcode].qty += qty;
-                                    cart.items[barcode].amount = (rate - discount) * cart.items[barcode].qty;
+                            } else {
+                                let existingItemIndex = cart.items.findIndex(item => item.barcode === barcode);
+                                if (existingItemIndex !== -1) {
+                                    cart.items[existingItemIndex].qty += qty;
+                                    cart.items[existingItemIndex].amount = (rate - discount) * cart.items[existingItemIndex].qty;
                                 } else {
-                                    cart.items[barcode] = { productName, rate, discount, qty, amount };
+                                    cart.items.push({ barcode, productName, rate, discount, qty, amount });
                                 }
                                 updateCart();
                                 clearFields();
                             }
                         })
-
                     }
                 })
-                
             }
-
-            
         });  
 
         // If we want to edit a cart item
         $(document).on('click', '.edit-item', function() {
             let barcode = $(this).data('barcode');
-            let item = cart.items[barcode];
-            if (item) {
+            let itemIndex = cart.items.findIndex(item => item.barcode === barcode);
+            if (itemIndex !== -1) {
+                let item = cart.items[itemIndex];
                 $('#barcodeSearch').val(barcode);
                 $('#productSummary').val(item.productName);
                 $('#amount').val(item.rate);
                 $('#discountAmount').val(item.discount);
                 $('#quantity').val(item.qty);
-                delete cart.items[barcode];
+                cart.items.splice(itemIndex, 1);
                 updateCart();
             }
         });
 
-        // Round off input handel
+        // Round off input handle
         $('#roundOffBtn').on('click', function() {
             let roundOff = parseFloat($('#roundOffInput').val()) || 0;
             cart.roundOff = roundOff; // Store in cart object
-            finalTotal = cart.totalAmount - roundOff
-            cart.totalAmount = finalTotal
+            let finalTotal = cart.totalAmount - roundOff;
+            cart.totalAmount = finalTotal;
             $('#totalAmount').text(finalTotal.toFixed(2));
             $(this).prop("disabled", true);
-            
         });
 
-        // Paid amount handel
+        // Paid amount handle
         $('#paidBtn').on('click', function() {
             let paidAmount = parseFloat($("#paidInput").val()) || 0;
             cart.paidAmount = paidAmount; // Store in cart object
         });
 
-        // Check a custome already exist or not as well as checks it customer already have a cart item or not
+        // Check if customer already exists or not, and check if the customer already has a cart item or not
         $('#customerPhone').on('blur', function() {  
             let phone = $(this).val();
                         
             if (phone.length == 10) {  
                 let drafts = JSON.parse(localStorage.getItem(phone)) || {};
 
-                if(Object.keys(drafts).length === 0){
+                if (Object.keys(drafts).length === 0) {
                     $.ajax({
                         url: {% url "get_customer_by_phone" %},
                         type: 'GET',
@@ -423,25 +420,25 @@
                             if (response.success) {
                                 cart.customer.name = response.name;
                                 cart.customer.address = response.address;
-                                updateCustomer()
+                                updateCustomer();
                             } else {
                                 cart.customer.name = '';
                                 cart.customer.address = '';
-                                updateCustomer()
+                                updateCustomer();
                             }
                         },
                         error: function() {
                             alert('Error fetching customer details.');
                         }
                     });
-                }else{
+                } else {
                     cart = drafts;
-                    updateCart()
-                    updateCustomer()
+                    updateCart();
+                    updateCustomer();
                 }
             }
         });
-        
+
         // Store customer details in cart when input changes
         $('#customerName, #customerPhone, #customerAddress').on('input', function() {
             if ($(this).val().trim()) { 
@@ -453,24 +450,25 @@
 
         // To save the cart items into localStorage 
         $('#btnDraft').click(function() {
+            cart.coupon = {};
             cart.roundOff = 0;
-            cart.paidAmount = 0;
             cart.totalAmount = 0; 
+            cart.paidAmount = 0;
             localStorage.setItem(cart.customer.phone, JSON.stringify(cart));
             cart = {
-                items: {},
+                items: [],
                 customer: {},
                 coupon: {},
                 roundOff: 0,
                 totalAmount: 0,
                 paidAmount: 0
             };
-            updateCart()
-            updateCustomer()
-            updateRoundoffPayedAmmount()
+            updateCart();
+            updateCustomer();
+            updateRoundoffPayedAmmount();
             $("#roundOffBtn").prop("disabled", false);
-            alert("Cart saved for 24 hours!")
-        })
+            alert("Cart saved for 24 hours!");
+        });
 
         // Coupon code apply
         $('#checkCoupon').click(function() {
@@ -489,7 +487,7 @@
                     headers: { "X-CSRFToken": csrfToken },
                     success: function(response) {
                         if (response.success) {
-                            cart.coupon = {"code":couponCode, "amount": response.discount_amount};
+                            cart.coupon = {"code": couponCode, "amount": response.discount_amount};
                             cart.totalAmount = response.final_amount;
                             $('#totalAmount').text(response.final_amount);
                             $('#couponStatus').removeClass('text-danger').text(response.message).addClass('text-success');
@@ -507,10 +505,9 @@
         });
 
         $("#purchaseBtn").click(function(){
-            let csrf_token = $("#csrf_token").val()
-            
-            if(!totalAmount || Object.keys(cart.items).length <= 0){ 
-                alert("At list one product required!")
+            let csrf_token = $("#csrf_token").val();
+            if (!cart.totalAmount || cart.items.length <= 0) { 
+                alert("At least one product required!");
                 return false;
             }
             $.ajax({
@@ -522,14 +519,14 @@
                     if(response.success){
                         window.location.href = '/show-invoice/';
                     }
-
                 },
                 error: function(error){
-                    console.log(error)
+                    console.log(error);
                 }
             })
-        })
+        });
         
     });
 </script>
+
 {% endblock  %}
