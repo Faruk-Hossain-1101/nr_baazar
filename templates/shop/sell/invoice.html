@@ -269,5 +269,23 @@
 {% endblock %}
 
 {% block extra_script %}
-
+<script>
+window.onafterprint = function() {
+  
+  $.ajax({
+    url: {% url "after_bill_print" %},
+    type: "GET",
+    success: function(response){
+        if(response.success){
+            window.location.href = `/sell/`
+        }else{
+            alert("Something went wrong!")
+        }
+    },
+    error: function(error){
+        console.log(error)
+    }
+  })
+};
+</script>
 {% endblock %}

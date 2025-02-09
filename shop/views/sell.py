@@ -1,14 +1,16 @@
 import json
 import uuid
+from decimal import Decimal
+from django.utils.timezone import now
+from datetime import datetime, timedelta
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from decimal import Decimal
-from django.utils.timezone import now
 from shop.models.product import Product
 from shop.models.customer import Coupon, Customer, CustomerCoupon
-from datetime import datetime, timedelta
-from shop.models.order import Order
+from shop.models.order import Order, OrderItem
+from django.db import transaction
+from django.db.models import F
 
 
 def generate_invoice_number():
@@ -43,6 +45,9 @@ def get_product_details(request):
         'product_name': product.name,
         'rate': product.actual_price,
         'discount': round(discount, 2),
+        'color': product.color,
+        'size': product.size,
+        'sku':product.sku
     })
 
 def check_discount(request):
@@ -86,9 +91,11 @@ def check_qty(request):
     except Product.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Product not found'})
     
-
+@transaction.atomic
 def show_invoice(request):
     cart_data = request.session.get("cart", {})
+    customer_data = cart_data.get("customer", {})
+    coupon_data = cart_data.get("coupon", {})
     
     if request.method == 'POST':
         data = json.loads(request.body)
@@ -120,7 +127,7 @@ def show_invoice(request):
     # Get total amount after discount
     total_amount = Decimal(cart_data.get("totalAmount", 0))
     paid_amount = Decimal(cart_data.get("paidAmount", 0))
-    coupon_discount = Decimal(cart_data.get('coupon', '').get('amount', 0))
+    coupon_discount = Decimal(coupon_data.get('amount', 0))
 
     # Calculate grand total after all discounts
     grand_total = total_amount - (total_discount + coupon_discount)
@@ -141,6 +148,53 @@ def show_invoice(request):
     # Generate unique invoice number and formatted date-time
     invoice_number = generate_invoice_number()
     formatted_date = kolkata_time.strftime('%d/%m/%Y')
+
+
+    # Now create the customer, order, and order items
+    customer, created = Customer.objects.get_or_create(
+        phone=customer_data.get('phone', ''),
+        defaults={'name': customer_data.get('name', ''), 'address': customer_data.get('address', '')}
+    )
+
+    # Found Coupon
+    coupon = None
+    if coupon_data:
+        coupon = Coupon.objects.filter(code=coupon_data.get('code')).first()
+
+        if coupon.coupon_type == 'individual':
+            CustomerCoupon.objects.filter(customer=customer).update(is_used = True)
+
+
+    # Create the order
+    order = Order.objects.create(
+        order_number=invoice_number,
+        customer=customer,
+        total_amount=total_amount+total_discount+coupon_discount,
+        discount_amount=total_discount+coupon_discount,
+        actual_amount=total_amount,
+        paid_amount=paid_amount if paid_amount > 0 else total_amount,
+        due_amount=due_amount,
+        payment_type=cart_data.get('paymentType', 'cash'),  # Adjust if using a different payment type
+        payment_status='Success',  # You can change this if needed
+        coupon=coupon,
+    )
+
+    # Create order items
+    for item in cart_data.get('items', []):
+        qty = int(item.get('qty', 1))
+        Product.objects.filter(sku=item.get('sku', '')).update(stock_quantity=F('stock_quantity') - qty)
+
+        OrderItem.objects.create(
+            order=order,
+            product_name=item.get('productName', ''),
+            actual_price=Decimal(item.get('rate', 0)),
+            discount_amount=Decimal(item.get('discount', 0)),
+            color=item.get('color', ''),
+            size=item.get('size', ''),
+            quantity=qty,
+            sku=item.get('sku', ''),
+        )
+
     
     context = {
         "cart_data": cart_data,
@@ -153,8 +207,9 @@ def show_invoice(request):
         "due_amount": due_amount,
         "invoice_no": invoice_number,
         "invoice_date": formatted_date,
-
     }
-
     return render(request, "shop/sell/invoice.html", context)
-    
+
+def after_bill_print(request):    
+    request.session['cart'] = None
+    return JsonResponse({"success": True, "message": "Order created successfully"})

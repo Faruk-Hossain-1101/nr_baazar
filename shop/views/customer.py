@@ -9,7 +9,7 @@ def get_customer_by_phone(request):
         return JsonResponse({
             'success': True,
             'name': customer.name,
-            'email': customer.email
+            'address': customer.address
         })
     except Customer.DoesNotExist:
         return JsonResponse({'success': False}) 

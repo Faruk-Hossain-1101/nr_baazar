@@ -2,9 +2,9 @@ from django.db import models
 from django.utils.timezone import now
 
 class Customer(models.Model):
-    name = models.CharField(max_length=100, blank=True, null=True)
     phone = models.CharField(max_length=15)
-    address = models.CharField(max_length=255)
+    name = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -15,6 +15,11 @@ class Coupon(models.Model):
         ('flat', 'Flat'),
         ('percentage', 'Percentage')
     ]
+    COUPON_TYPE_CHOICES = [
+        ('global', 'Global'),
+        ('individual', 'Individual')
+    ]
+
     code = models.CharField(max_length=25, unique=True)
     discount_type = models.CharField(max_length=10, choices=DISCOUNT_TYPE_CHOICES)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
@@ -22,6 +27,8 @@ class Coupon(models.Model):
     is_active = models.BooleanField(default=True)
     minium_order = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     expiry_date = models.DateTimeField()
+    coupon_type = models.CharField(max_length=10, choices=COUPON_TYPE_CHOICES, default='global')
+
 
     def is_valid(self):
         """Check if the coupon is active and not expired"""

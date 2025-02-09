@@ -141,6 +141,10 @@
                             <label for="quantity">Quantity</label>
                             <input type="number" class="form-control" id="quantity" min="1" value="1">
                         </div>
+                        <input type="hidden" id="colorInput" value=""/>
+                        <input type="hidden" id="sizeInput" value="" />
+                        <input type="hidden" id="skuInput" value=""/>
+
                         <div class="col-md-12 text-right mt-2">
                             <button class="btn btn-primary btn-sm" id="moveToCart">Move >></button>
                         </div>
@@ -397,6 +401,9 @@
                             $('#amount').val(response.rate);
                             $('#discountAmount').val(response.discount);
                             $('#quantity').val(1);
+                            $("#colorInput").val(response.color)
+                            $("#sizeInput").val(response.size)
+                            $("#skuInput").val(response.sku)
                             setTimeout(()=>{
                                 $('#moveToCart').click()
                             }, 500)
@@ -419,6 +426,9 @@
             let qty = parseInt($('#quantity').val());
             let amount = (rate - discount) * qty;
             let barcode = $('#barcodeSearch').val();
+            let color = $('#colorInput').val()
+            let size = $('#sizeInput').val()
+            let sku = $('#skuInput').val()
 
             if (productName && rate && qty) {
                 check_qty_availability(barcode, qty, function(isQtyValid){
