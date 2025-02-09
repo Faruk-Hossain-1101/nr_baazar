@@ -160,8 +160,15 @@
 
       <!-- Invoice Number and Date -->
       <div class="invoice-info no-margin" style="display: flex; justify-content: space-between;">
-        <p>Invoice No: {{ invoice_no }}</p>
-        <p>Date: {{ invoice_date }}</p>
+        <div>
+          Customer Details
+          <p>{{ cart_data.customer.name}}</p>
+          <p>{{ cart_data.customer.phone}}</p>
+        </div>
+        <div>
+          <p>Invoice No: {{ invoice_no }}</p>
+          <p>Date: {{ invoice_date }}</p>
+        </div>
       </div>
       <hr>
       <h4 class="text-center">Receipt</h4>
@@ -219,26 +226,37 @@
           <p><strong>Grand Total</strong></p>
           <p><strong>₹{{ grand_total }}</strong></p>
         </div>
-      </div>
 
-      <hr>
+        <hr>
+        
+        {% if paid_amount %}
+        <div style="display: flex; justify-content: space-between;">
+          <p><strong>Paid</strong></p>
+          <p><strong class="text-capitalize">{{ cart_data.paymentType }}</strong></p>
+          <p><strong>₹{{ paid_amount }}</strong></p>
+        </div>
+        {% endif %}
+        {% if due_amount %}
+        <div style="display: flex; justify-content: space-between;">
+          <p><strong>Due</strong></p>
+          <p><strong>₹{{ due_amount }}</strong></p>
+        </div>
+        {% else %}
+        <div style="display: flex; justify-content: space-between; font-size: 14px">
+          <p><strong>Paid</strong></p>
+          <p><strong class="text-capitalize">{{ cart_data.paymentType }}</strong></p>
+        </div>
+        {% endif %}
 
-      <!-- Paid and Due Section -->
-      <div class="due-paid" style="display: flex; justify-content: space-between;">
-        <h3>Paid</h3>
-        <h3>Cash</h3>
-      </div>
-      <div class="due-paid" style="display: flex; justify-content: space-between;">
-        <h3>Due</h3>
-        <h3>300</h3>
-      </div>
+    </div>
 
       <hr>
 
       <!-- Thank You Section -->
       <p class="thank-you text-center">
-        <strong>Thank You!</strong><br>
-        Concern: If you want to return or exchange the product, it will be exchanged within 7 days of purchase.
+        <span>আপনার কেনাকাটার জন্য! আমরা সবসময় আপনার সেবা প্রদান করতে প্রস্তুত। পরবর্তী কেনাকাটায় আবার দেখা হবে আশা করছি।</span><br>
+        <span><b>কাপড় রিটার্ন বা এক্সচেঞ্জের জন্য ৭ দিনের মধ্যে ফিরে আসতে হবে এবং কাপড়টি ভালো অবস্থায় থাকতে হবে। বিল সাথেই নিয়ে আসবেন।<b></span><br>
+        <strong class="fa-2x">ধন্যবাদ</strong><br>
       </p>
       
       <!-- Print Button -->

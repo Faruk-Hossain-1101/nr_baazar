@@ -3,53 +3,94 @@
 {% block extra_style %}
 <style>
     /* Coupon Input Container */
-    .coupon-container {
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
+.coupon-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
 
-    /* Input Field */
-    .coupon-input {
-        padding-right: 45px; /* Space for the button inside */
-        border: 1.5px solid #5600ff47;
-        border-radius: 25px;
-        height: 45px;
-        font-size: 16px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
+/* Input Field */
+.coupon-input {
+    padding-right: 45px; /* Space for the button inside */
+    border: 1.5px solid #5600ff47;
+    border-radius: 25px;
+    height: 45px;
+    font-size: 16px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-    /* Button Inside the Input */
-    .coupon-btn {
-        position: absolute;
-        right: 5px;
-        top: 50%;
-        transform: translateY(-50%);
-        background: #5600ff96;
-        color: white;
-        border: none;
-        border-radius: 50%;
-        width: 35px;
-        height: 35px;
-        font-size: 18px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        transition: 0.3s;
-    }
+/* Button Inside the Input */
+.coupon-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #5600ff96;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    font-size: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: 0.3s;
+}
 
-    .coupon-btn:hover {
-        background: #5600ff96;
-        transform: translateY(-50%) scale(1.1);
-    }
+.coupon-btn:hover {
+    background: #5600ff96;
+    transform: translateY(-50%) scale(1.1);
+}
 
-    /* Applied Coupon Status */
-    #couponStatus {
-        font-size: 16px;
-        font-weight: bold;
-        margin-left: 10px;
-    }
+/* Payment Dropdown Container */
+.payment-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 45px;
+}
+
+/* Payment Dropdown */
+.payment-select {
+    width: 100%;
+    border: 1.5px solid #5600ff47;
+    border-radius: 25px;
+    height: 45px;
+    font-size: 16px;
+    padding: 0 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    background-color: white;
+    appearance: none; /* Removes default browser styling */
+    cursor: pointer;
+}
+
+/* Applied Coupon Status */
+#couponStatus {
+    font-size: 16px;
+    font-weight: bold;
+    margin-left: 10px;
+}
+/* Applied Coupon Status */
+.coupon-status {
+    font-size: 14px;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background-color: rgba(86, 0, 255, 0.08); /* Light purple background */
+    color: #5600ff;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Hide status when empty */
+.coupon-status:empty {
+    display: none;
+}
+
+
 
 </style>
 
@@ -139,15 +180,30 @@
                     </table>
 
                     <div class="row mb-3">
+                        <!-- Coupon Input Section -->
                         <div class="col-md-6">
                             <div class="coupon-container">
                                 <input type="text" class="form-control coupon-input" id="couponCode" placeholder="Enter Coupon Code">
                                 <button class="btn coupon-btn" id="checkCoupon">✔</button>
                             </div>
                         </div>
+                        
+                        <!-- Payment Type Dropdown -->
                         <div class="col-md-6">
-                            <span id="couponStatus" class="text-success"></span>
+                            <div class="payment-container">
+                                <select class="form-control payment-select" id="paymentType">
+                                    <option value="" disabled selected>Select Payment Type</option>
+                                    <option value="cash">Cash</option>
+                                    <option value="online">Online</option>
+                                    <option value="card">Card</option>
+                                </select>
+                            </div>
                         </div>
+                    </div>
+                    
+                    <!-- Coupon Status -->
+                    <div class="col-md-12 text-center">
+                        <small id="couponStatus" class="coupon-status text-success"></small>
                     </div>
                     
                     <div class="row mb-2">
@@ -172,7 +228,7 @@
 
                         <div class="ml-2 d-none coupon-container" id="dueContainer">
                             <input type="text" placeholder="Paid Amount" class="form-control coupon-input" id="paidInput">
-                            <button class="btn coupon-btn" id="paidBtn">✔</button>
+                            {% comment %} <button class="btn coupon-btn" id="paidBtn">✔</button> {% endcomment %}
                         </div>
                     </div>
                     
@@ -200,6 +256,7 @@
             roundOff: 0,
             totalAmount: 0,
             paidAmount: 0,
+            paymentType: "cash", 
         };
 
         function updateCart() {
@@ -279,6 +336,14 @@
         function toggleFields() {
             let roundOffChecked = $('#toggleRoundOff').is(':checked');
             let dueChecked = $('#toggleDue').is(':checked');
+            if(!roundOffChecked){
+                $("#roundOffInput").val('');
+                cart.roundOff = 0;
+            }
+            if(!dueChecked){
+                $("#paidInput").val('');
+                cart.paidAmount = 0;
+            }
     
             // Always show the input container
             if (roundOffChecked || dueChecked) {
@@ -313,10 +378,15 @@
         // Togle round off and paid amount
         $('#toggleRoundOff, #toggleDue').change(toggleFields);
 
+        let lastRequestTime = 0;
         // Barcode scanning and fetching product details
         $('#barcodeSearch').on('input', function() {
+            let now = Date.now();
             let barcode = $(this).val();
-            if (barcode.length === 10) { // Ensure only 10-digit barcode triggers the request
+
+            if ((barcode.length === 10) && ((now - lastRequestTime) > 1000)) { // Ensure only 10-digit barcode triggers the request
+                lastRequestTime = now;
+
                 $.ajax({
                     url: '/get-product/',  // Replace with actual endpoint
                     type: 'GET',
@@ -327,6 +397,9 @@
                             $('#amount').val(response.rate);
                             $('#discountAmount').val(response.discount);
                             $('#quantity').val(1);
+                            setTimeout(()=>{
+                                $('#moveToCart').click()
+                            }, 500)
                         } else {
                             alert('Product not found');
                         }
@@ -399,7 +472,7 @@
         });
 
         // Paid amount handle
-        $('#paidBtn').on('click', function() {
+        $('#paidInput').on('blur', function() {
             let paidAmount = parseFloat($("#paidInput").val()) || 0;
             cart.paidAmount = paidAmount; // Store in cart object
         });
@@ -450,6 +523,14 @@
 
         // To save the cart items into localStorage 
         $('#btnDraft').click(function() {
+            if (cart.items.length == 0){
+                alert("Nothing to save!")
+                return false;
+            }
+            if (!cart.customer.phone){
+                alert("Custome name is required to save to draft!")
+                return false;
+            }
             cart.coupon = {};
             cart.roundOff = 0;
             cart.totalAmount = 0; 
@@ -461,7 +542,8 @@
                 coupon: {},
                 roundOff: 0,
                 totalAmount: 0,
-                paidAmount: 0
+                paidAmount: 0,
+                paymentType: "cash"
             };
             updateCart();
             updateCustomer();
@@ -503,6 +585,10 @@
                 alert('Please enter a coupon code.');
             }
         });
+
+        $("#paymentType").on('change', function(){
+            cart.paymentType = $(this).val()
+        })
 
         $("#purchaseBtn").click(function(){
             let csrf_token = $("#csrf_token").val();

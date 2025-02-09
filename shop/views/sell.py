@@ -119,21 +119,29 @@ def show_invoice(request):
 
     # Get total amount after discount
     total_amount = Decimal(cart_data.get("totalAmount", 0))
+    paid_amount = Decimal(cart_data.get("paidAmount", 0))
     coupon_discount = Decimal(cart_data.get('coupon', '').get('amount', 0))
 
     # Calculate grand total after all discounts
     grand_total = total_amount - (total_discount + coupon_discount)
+    if paid_amount <= 0:
+        due_amount = Decimal(0)
+    else:
+        due_amount = grand_total - paid_amount
 
      # Quantize all amounts to two decimal places
     total_discount = total_discount.quantize(Decimal('0.00'))
     grand_total = grand_total.quantize(Decimal('0.00'))
     total_amount = total_amount.quantize(Decimal('0.00'))
     coupon_discount = coupon_discount.quantize(Decimal('0.00'))
+    due_amount = due_amount.quantize(Decimal('0.00'))
+    paid_amount = paid_amount.quantize(Decimal('0.00'))
 
 
     # Generate unique invoice number and formatted date-time
     invoice_number = generate_invoice_number()
     formatted_date = kolkata_time.strftime('%d/%m/%Y')
+    
     context = {
         "cart_data": cart_data,
         "total_discount": total_discount,
@@ -141,8 +149,11 @@ def show_invoice(request):
         "total_amount": total_amount,
         "coupon_discount": coupon_discount,
         "total_item": total_item,
+        "paid_amount": paid_amount,
+        "due_amount": due_amount,
         "invoice_no": invoice_number,
-        "invoice_date": formatted_date
+        "invoice_date": formatted_date,
+
     }
 
     return render(request, "shop/sell/invoice.html", context)
