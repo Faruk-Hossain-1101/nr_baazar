@@ -335,6 +335,9 @@
             $('#amount').val('');
             $('#discountAmount').val('');
             $('#quantity').val(1);
+            $('#colorInput').val('');
+            $('#sizeInput').val('');
+            $('#skuInput').val('');
         }
 
         function toggleFields() {
@@ -444,7 +447,7 @@
                                     cart.items[existingItemIndex].qty += qty;
                                     cart.items[existingItemIndex].amount = (rate - discount) * cart.items[existingItemIndex].qty;
                                 } else {
-                                    cart.items.push({ barcode, productName, rate, discount, qty, amount });
+                                    cart.items.push({ barcode, productName, rate, discount, qty, amount, color, size, sku });
                                 }
                                 updateCart();
                                 clearFields();
@@ -466,6 +469,9 @@
                 $('#amount').val(item.rate);
                 $('#discountAmount').val(item.discount);
                 $('#quantity').val(item.qty);
+                $('#colorInput').val(item.color);
+                $('#sizeInput').val(item.size);
+                $('#skuInput').val(item.sku);
                 cart.items.splice(itemIndex, 1);
                 updateCart();
             }

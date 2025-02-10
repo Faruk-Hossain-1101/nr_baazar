@@ -163,7 +163,7 @@
         <div>
           Customer Details
           <p>{{ cart_data.customer.name}}</p>
-          <p>{{ cart_data.customer.phone}}</p>
+          <p id="phoneNumber">{{ cart_data.customer.phone}}</p>
         </div>
         <div>
           <p>Invoice No: {{ invoice_no }}</p>
@@ -181,8 +181,8 @@
             <th>SL</th>
             <th>Item</th>
             <th>Rate/Unit</th>
-            <th>Discount</th>
             <th>Qty</th>
+            <th>Discount</th>
             <th>Amount</th>
           </tr>
         </thead>
@@ -192,16 +192,18 @@
             <td>{{ forloop.counter }}</td>
             <td>{{ item.productName}}</td>
             <td>{{ item.rate}}</td>
-            <td>{{ item.discount}}</td>
             <td>{{ item.qty}}</td>
+            <td>{{ item.discount}}</td>
             <td>{{ item.amount}}</td>
           </tr>
           {% endfor %}
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="4" class="text-right"><strong>Total</strong></td>
+            <td colspan="2" class="text-right"><strong>Total</strong></td>
+            <td><strong>{{ actual_price }}</strong></td>
             <td><strong>{{ total_item }}</strong></td>
+            <td><strong>{{ item_discount }}</strong></td>
             <td><strong>{{ total_amount }}</strong></td>
           </tr>
         </tfoot>
@@ -215,13 +217,15 @@
           <p>{{ coupon_discount }}</p>
         </div>
         {% endif %}
-        {% if total_discount > 0 %}
+        {% if roundoff > 0 %}
         <div style="display: flex; justify-content: space-between;">
-          <p>Discount</p>
-          <p>{{ total_discount }}</p>
+          <p>Round Off</p>
+          <p>{{ roundoff }}</p>
         </div>
         {% endif %}
+        {% if coupon_discount or roundOff %}
         <hr>
+        {% endif %}
         <div style="display: flex; justify-content: space-between;">
           <p><strong>Grand Total</strong></p>
           <p><strong>₹{{ grand_total }}</strong></p>
@@ -277,7 +281,8 @@ window.onafterprint = function() {
     type: "GET",
     success: function(response){
         if(response.success){
-            window.location.href = `/sell/`
+          localStorage.setItem($("#phoneNumber").text(), JSON.stringify(''));
+          window.location.href = `/sell/`
         }else{
             alert("Something went wrong!")
         }
