@@ -8,16 +8,15 @@ class CustomUserManager(BaseUserManager):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-
         # Default active status
         extra_fields.setdefault('is_active', True)
-
         user = self.model(username=username, email=email, **extra_fields)
-
         if password:
-            user.set_password(password)  # Ensure password is hashed properly
-
+            user.set_password(password)
+        else:
+            user.set_unusable_password()
         user.save(using=self._db)
+        
         return user
 
     def create_superuser(self, username, email, password=None, **extra_fields):

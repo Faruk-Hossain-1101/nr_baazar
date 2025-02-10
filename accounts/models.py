@@ -18,5 +18,12 @@ class CustomUser(AbstractUser):
 
     objects = CustomUserManager()
 
+    def save(self, *args, **kwargs):
+        # If the password is provided in plain text, hash it.
+        # Django’s default hashed passwords usually start with "pbkdf2_" (or your chosen algorithm’s prefix).
+        if self.password and not self.password.startswith('pbkdf2_'):
+            self.set_password(self.password)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.username
