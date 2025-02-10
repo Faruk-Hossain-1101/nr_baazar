@@ -103,7 +103,7 @@ def apply_coupon(request):
         
         try:
             total_amount = Decimal(request.POST.get("total_amount", "0"))
-        except ValueError:
+        except Exception as e:
             return JsonResponse({"success": "error", "message": "Invalid total amount"})
 
         # Validate input
@@ -113,7 +113,6 @@ def apply_coupon(request):
         # Check if the coupon exists and is active
         coupon = Coupon.objects.filter(code=coupon_code, is_active=True).first()
         if not coupon:
-            print(coupon)
             return JsonResponse({"success": False, "message": "Invalid or inactive coupon"})
 
         # Check if the coupon is expired
