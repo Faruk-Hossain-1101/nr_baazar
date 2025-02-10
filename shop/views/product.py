@@ -6,6 +6,8 @@ import random
 from decimal import Decimal, InvalidOperation
 from django.contrib import messages
 from shop.utils.barcode import create_label
+from accounts.middleware import role_required
+
 
 def generate_sku(product_name):
     # Create SKU prefix by taking the first letter of each word in the product name
@@ -25,12 +27,13 @@ def generate_sku(product_name):
 
     return sku
 
+@role_required(['admin', 'manager'])
 def view_product(request):
     if request.method == "GET":
         products = Product.objects.all().order_by('-id')
         return render(request, 'shop/view_product.html', {'products': products})
     
-
+@role_required(['admin', 'manager'])
 def add_product(request):
     if request.method == 'POST':
         # Retrieve and sanitize input data
@@ -132,7 +135,7 @@ def add_product(request):
 
     return render(request, 'shop/add_product.html')
 
-
+@role_required(['admin', 'manager'])
 def edit_product(request, id):
     product = get_object_or_404(Product, id=id)
 

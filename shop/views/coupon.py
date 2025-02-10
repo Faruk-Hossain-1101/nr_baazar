@@ -5,11 +5,14 @@ from decimal import Decimal
 from django.utils.timezone import now
 from shop.models.customer import Coupon, CustomerCoupon
 from django.contrib import messages
+from accounts.middleware import role_required
 
+@role_required(['admin', 'manager'])
 def view_coupon(request):
     coupons = Coupon.objects.filter(is_active=True)
     return render(request, 'shop/coupon/index.html', {'coupons': coupons})
 
+@role_required(['admin', 'manager'])
 def add_coupon(request):
     if request.method == "POST":
         code = request.POST.get("code").strip()
@@ -53,6 +56,7 @@ def add_coupon(request):
 
     return render(request, "shop/coupon/add_coupon.html")
 
+@role_required(['admin', 'manager'])
 def edit_coupon(request, coupon_id):
     coupon = get_object_or_404(Coupon, id=coupon_id)
     if request.method == "POST":

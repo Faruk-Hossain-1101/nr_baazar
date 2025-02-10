@@ -1,14 +1,13 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from shop.models.product import Product
+from accounts.middleware import role_required
 
+@role_required(['admin', 'manager'])
 def print_labels(p_ids):
-
     # Fetch the products from the database
     products = Product.objects.filter(id__in=p_ids)
-
     label_pairs = []  # Store pairs of labels
-
     remainder = None  # Track the extra label
 
     for product in products:
@@ -32,16 +31,18 @@ def print_labels(p_ids):
         
     return label_pairs
 
-
+@role_required(['admin', 'manager'])
 def show_barcode_data(request):
     products = Product.objects.all().order_by('-id')
     return render(request, 'shop/barcode/index.html', {'products': products} )
 
+@role_required(['admin', 'manager'])
 def preview_barcode(request):
     product_ids = request.GET.get('products', '').split(',')
     # Get product IDs from the query string
     return render(request, 'shop/barcode/barcode_preview.html', {"label_pairs": print_labels(product_ids), "p_ids": product_ids})
 
+@role_required(['admin', 'manager'])
 def print_barcode(request):
     p_ids = request.GET.get('p_ids').split(", ")
     for id in p_ids:
