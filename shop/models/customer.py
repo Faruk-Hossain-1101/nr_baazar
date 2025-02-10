@@ -45,4 +45,4 @@ class CustomerCoupon(models.Model):
     is_used = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.customer.name or 'Unknown'} - {self.coupon.code} ({'Used' if self.is_used else 'Not Used'})"
+        return f"{self.customer.name or 'Unknown'} - {self.coupon.code}"

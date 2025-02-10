@@ -48,7 +48,7 @@ class PrintBarcodeViewTests(TestCase):
         mock_filter.return_value = [self.product1, self.product2]
         
         # Simulate a GET request with product IDs
-        response = self.client.get(reverse('print_barcode') + "?products=" + str(self.product1.id) + "," + str(self.product2.id))
+        response = self.client.get(reverse('preview_barcode') + "?products=" + str(self.product1.id) + "," + str(self.product2.id))
         
         # Check if the response is successful
         self.assertEqual(response.status_code, 200)
@@ -71,7 +71,7 @@ class PrintBarcodeViewTests(TestCase):
 
     def test_no_products(self):
         # Simulate a GET request with no products
-        response = self.client.get(reverse('print_barcode') + "?products=1,2")
+        response = self.client.get(reverse('preview_barcode') + "?products=1,2")
         
         # Check if the response is successful
         self.assertEqual(response.status_code, 200)

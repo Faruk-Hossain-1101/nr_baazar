@@ -46,7 +46,7 @@ class CouponModelTest(TestCase):
 
     def test_coupon_str(self):
         """Test the string representation of the coupon model."""
-        self.assertEqual(str(self.coupon), "TESTCOUPON")
+        self.assertEqual(str(self.coupon), "TESTCOUPON (Active)")
 
 
 class CustomerCouponModelTest(TestCase):
