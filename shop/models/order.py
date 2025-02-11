@@ -2,21 +2,12 @@ from django.db import models
 from .customer import Customer
 
 class Order(models.Model):
-    PAYMENT_STATUS_CHOICES = [
-        ('Pending', 'Pending'),
-        ('Paid', 'Paid'),
-        ('Failed', 'Failed')
-    ]
     order_number = models.CharField(max_length=50, unique=True)
     customer = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     actual_amount = models.DecimalField(max_digits=10, decimal_places=2)
     order_date = models.DateTimeField(auto_now_add=True)
-    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    due_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    payment_type = models.CharField(max_length=50, default='cash')
-    payment_status = models.CharField(max_length=10, choices=PAYMENT_STATUS_CHOICES, default='Pending')
     coupon = models.ForeignKey('Coupon', on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):

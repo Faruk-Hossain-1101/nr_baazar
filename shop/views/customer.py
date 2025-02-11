@@ -1,6 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
 from shop.models.customer import Customer  
+from django.db.models import Sum
 
 
 def get_customer_by_phone(request):
@@ -24,4 +25,18 @@ def customers_list(request):
 def customer_detail(request, customer_id):
     # Get the customer and their orders
     customer = get_object_or_404(Customer, id=customer_id)
-    return render(request, 'shop/customer/customer_detail.html', {'customer': customer})
+    orders = customer.order_set.select_related("payment").all().order_by("-id")
+
+    # Aggregate total spent and total discount
+    totals = orders.aggregate(
+        total_spent=Sum('actual_amount', default=0),
+        total_discount=Sum('discount_amount', default=0)
+    )
+
+    context = {
+        "customer": customer,
+        "orders": orders,
+        "total_spent": totals["total_spent"] or 0,
+        "total_discount": totals["total_discount"] or 0,
+    }
+    return render(request, 'shop/customer/customer_detail.html', context)

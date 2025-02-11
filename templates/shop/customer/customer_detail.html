@@ -20,12 +20,8 @@
                     </div>
                     <div class="col-md-6">
                         <h5><i class="fas fa-cogs"></i> Account Information</h5>
-                        <p><strong>Account Created:</strong> {{ customer.date_created }}</p>
-                        <p><strong>Status:</strong>
-                            <span class="badge {% if customer.is_active %}badge-success{% else %}badge-danger{% endif %}">
-                                {% if customer.is_active %}Active{% else %}Inactive{% endif %}
-                            </span>
-                        </p>
+                        <p><strong>Lifetime Purchase:</strong> {{ total_spent }}</p>
+                        <p><strong>Lifetime Savings:</strong> {{ total_discount }}</p>
                     </div>
                 </div>
                 
@@ -37,6 +33,10 @@
                             <tr>
                                 <th>Order Number</th>
                                 <th>Total Amount</th>
+                                <th>Discount Amount</th>
+                                <th>Actual Amount</th>
+                                <th>Paid Amount</th>
+                                <th>Due Amount</th>
                                 <th>Payment Status</th>
                                 <th>Order Date</th>
                                 <th>Coupon Used</th>
@@ -44,15 +44,31 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for order in customer.order_set.all %}
+                            {% for order in orders %}
                                 <tr>
                                     <td>{{ order.order_number }}</td>
                                     <td>{{ order.total_amount }}</td>
-                                    <td>
-                                        <span class="badge {% if order.payment_status == 'Paid' %}badge-success{% elif order.payment_status == 'Pending' %}badge-warning{% else %}badge-danger{% endif %}">
-                                            {{ order.payment_status }}
-                                        </span>
-                                    </td>
+                                    <td>{{ order.discount_amount }}</td>
+                                    <td>{{ order.actual_amount }}</td>
+
+                                    <!-- Fetch Payment Details -->
+                                    {% with order.payment as payment %}
+                                        <td>{{ payment.paid_amount|default:"0.00" }}</td>
+                                        <td>{{ payment.due_amount|default:"0.00" }}</td>
+                                        <td>
+                                            {% if payment %}
+                                                <span class="badge 
+                                                    {% if payment.payment_status == 'success' %}badge-success
+                                                    {% elif payment.payment_status == 'pending' %}badge-warning
+                                                    {% else %}badge-danger{% endif %}">
+                                                    {{ payment.payment_status }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No Payment</span>
+                                            {% endif %}
+                                        </td>
+                                    {% endwith %}
+
                                     <td>{{ order.order_date }}</td>
                                     <td>
                                         {% if order.coupon %}

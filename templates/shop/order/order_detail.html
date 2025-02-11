@@ -1,41 +1,59 @@
 {% extends "base.html" %}
-
+{% load custom_filters %}
 {% block content %}
     <div class="container-fluid">
-        <!-- Order Details Section -->
-        <div class="card shadow mb-4">
-            <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">
-                    <i class="fas fa-shopping-cart"></i> Order #{{ order.order_number }} Details
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-user"></i> Customer Information</h5>
-                        <p><strong>Name:</strong> {{ order.customer.name }}</p>
-                        <p><strong>Email:</strong> {{ order.customer.email }}</p>
-                        <p><strong>Phone:</strong> {{ order.customer.phone }}</p>
+        <h1 class="h3 mb-4 text-gray-800">Order Detail - {{ order.order_number }}</h1>
+        <div class="row">
+        
+            <div class="col-md-6">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Order Information</h6>
                     </div>
-                    <div class="col-md-6">
-                        <h5><i class="fas fa-credit-card"></i> Payment Information</h5>
+                    <div class="card-body">
+                        <p><strong>Customer:</strong> {{ order.customer.name }}</p>
+                        <p><strong>Phone:</strong> {{ order.customer.phone }}</p>
                         <p><strong>Total Amount:</strong> {{ order.total_amount }}</p>
                         <p><strong>Discount Amount:</strong> {{ order.discount_amount }}</p>
                         <p><strong>Actual Amount:</strong> {{ order.actual_amount }}</p>
-                        <p><strong>Paid Amount:</strong> {{ order.paid_amount }}</p>
-                        <p><strong>Due Amount:</strong> {{ order.due_amount }}</p>
-                        <p><strong>Payment Type:</strong> {{ order.payment_type }}</p>
-                        <p><strong>Payment Status:</strong>
-                            <span class="badge {% if order.payment_status == 'Paid' %}badge-success{% elif order.payment_status == 'Pending' %}badge-warning{% else %}badge-danger{% endif %}">
-                                {{ order.payment_status }}
-                            </span>
-                        </p>
+                        <p><strong>Order Date:</strong> {{ order.order_date }}</p>
                     </div>
                 </div>
+            </div>
 
-                <h5 class="mt-4"><i class="fas fa-box"></i> Order Items</h5>
+            <div class="col-md-6">
+            <!-- Payment Information -->
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Payment Information</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if payment %}
+                            <p><strong>Paid Amount:</strong> {{ payment.paid_amount }}</p>
+                            <p><strong>Due Amount:</strong> {{ payment.due_amount }}</p>
+                            <p><strong>Payment Type:</strong> {{ payment.payment_method }}</p>
+                            <p><strong>Payment Status:</strong> 
+                                <span class="badge {% if payment.payment_status == 'success' %}badge-success{% elif payment.payment_status == 'pending' %}badge-warning{% else %}badge-danger{% endif %}">
+                                    {{ payment.payment_status }}
+                                </span>
+                            </p>
+                        {% else %}
+                            <p><strong>No payment information available.</strong></p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Items -->
+        <h3>Order Items</h3>
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Items in this Order</h6>
+            </div>
+            <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-bordered" id="orderItemsTable" width="100%" cellspacing="0">
+                    <table class="table table-bordered" width="100%" cellspacing="0">
                         <thead>
                             <tr>
                                 <th>Product Name</th>
@@ -52,7 +70,7 @@
                                     <td>{{ item.quantity }}</td>
                                     <td>{{ item.actual_price }}</td>
                                     <td>{{ item.discount_amount }}</td>
-                                    <td>{{ item.actual_price|floatformat:2|add:item.discount_amount|floatformat:2 }}</td>
+                                    <td>{{ item.actual_price|sub:item.discount_amount|floatformat:2 }}</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
@@ -60,8 +78,5 @@
                 </div>
             </div>
         </div>
-
-        <!-- Back Button -->
-        <a href="{% url 'orders_list' %}" class="btn btn-primary"><i class="fas fa-arrow-left"></i> Back to Orders List</a>
     </div>
 {% endblock %}

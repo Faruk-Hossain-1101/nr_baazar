@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from shop.models.product import Product
 from shop.models.customer import Coupon, Customer, CustomerCoupon
 from shop.models.order import Order, OrderItem
+from shop.models.payment import Payment
 from django.db import transaction
 from django.db.models import F
 
@@ -206,10 +207,6 @@ def after_bill_print(request):
             total_amount=context['actual_price'],
             discount_amount=context['roundoff']+context['coupon_discount']+context['item_discount'],
             actual_amount=context['grand_total'],
-            paid_amount=context['paid_amount'] if context['paid_amount'] > 0 else context['grand_total'],
-            due_amount=context['due_amount'],
-            payment_type=cart_data.get('paymentType', 'cash'),  # Adjust if using a different payment type
-            payment_status='Success',  # You can change this if needed
             coupon=coupon,
         )
 
@@ -228,7 +225,19 @@ def after_bill_print(request):
                 quantity=qty,
                 sku=item.get('sku', ''),
             )
-
+        
+        paid_amount=context['paid_amount'] if context['paid_amount'] > 0 else context['grand_total']
+        due_amount=context['due_amount']
+        payment_type=cart_data.get('paymentType', 'cash')  # Adjust if using a different payment type
+        payment_status='success'  # You can change this if needed
+        
+        Payment.objects.create(
+            order=order,
+            payment_method=payment_type,
+            payment_status=payment_status,
+            paid_amount=paid_amount,
+            due_amount=due_amount if due_amount > 0 else None,
+        )
         
            
         request.session['cart'] = None
