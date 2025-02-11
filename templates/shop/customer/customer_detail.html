@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container-fluid">
+        <!-- Customer Details Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-user"></i> Customer #{{ customer.id }} Details
+                </h6>
+            </div>
+            <div class="card-body">
+                <!-- Customer Information -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-info-circle"></i> Customer Information</h5>
+                        <p><strong>Name:</strong> {{ customer.name }}</p>
+                        <p><strong>Phone:</strong> {{ customer.phone }}</p>
+                        <p><strong>Address:</strong> {{ customer.address }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-cogs"></i> Account Information</h5>
+                        <p><strong>Account Created:</strong> {{ customer.date_created }}</p>
+                        <p><strong>Status:</strong>
+                            <span class="badge {% if customer.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                                {% if customer.is_active %}Active{% else %}Inactive{% endif %}
+                            </span>
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Orders Section -->
+                <h5 class="mt-4"><i class="fas fa-box"></i> Orders for {{ customer.name }}</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="ordersTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>Order Number</th>
+                                <th>Total Amount</th>
+                                <th>Payment Status</th>
+                                <th>Order Date</th>
+                                <th>Coupon Used</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in customer.order_set.all %}
+                                <tr>
+                                    <td>{{ order.order_number }}</td>
+                                    <td>{{ order.total_amount }}</td>
+                                    <td>
+                                        <span class="badge {% if order.payment_status == 'Paid' %}badge-success{% elif order.payment_status == 'Pending' %}badge-warning{% else %}badge-danger{% endif %}">
+                                            {{ order.payment_status }}
+                                        </span>
+                                    </td>
+                                    <td>{{ order.order_date }}</td>
+                                    <td>
+                                        {% if order.coupon %}
+                                            {{ order.coupon.code }}
+                                        {% else %}
+                                            No Coupon
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'order_detail' order.id %}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> View Order
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Back Button -->
+        <a href="{% url 'customers_list' %}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Back to Customers List
+        </a>
+    </div>
+{% endblock %}

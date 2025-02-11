@@ -1,6 +1,6 @@
 
 from django.urls import path
-from shop.views import dashboard, product, barcode, sell, customer, coupon
+from shop.views import dashboard, product, barcode, sell, customer, coupon, order
 
 urlpatterns = [
     path('', dashboard.index, name='home'),
@@ -28,5 +28,11 @@ urlpatterns = [
     path('edit-coupon/<int:coupon_id>/', coupon.edit_coupon, name='edit_coupon'),
 
     # Customer
-    path('get-customer-by-phone/', customer.get_customer_by_phone, name="get_customer_by_phone")
+    path('customers/', customer.customers_list, name='customers_list'),
+    path('customers/<int:customer_id>/', customer.customer_detail, name='customer_detail'),
+    path('get-customer-by-phone/', customer.get_customer_by_phone, name="get_customer_by_phone"),
+
+    # Orders
+    path('orders/', order.orders_view, name='orders_list'),
+    path('orders/<int:order_id>/', order.order_detail, name='order_detail'),
 ]

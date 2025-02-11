@@ -55,6 +55,18 @@
                     <span>Sell</span>
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'orders_list' %}">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Order</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'customers_list' %}">
+                    <i class="fas fa-user"></i>
+                    <span>Customer</span>
+                </a>
+            </li>
             
             {% if user.is_authenticated and user.is_superuser or user.role == "manager" %}
                 <!-- Product Section - Only for Admin or Manager -->

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container-fluid">
+        <!-- Customers List Section -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">
+                    <i class="fas fa-users"></i> Customers List
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered" id="customersTable" width="100%" cellspacing="0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Account Created</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for customer in customers %}
+                                <tr>
+                                    <td>{{ customer.id }}</td>
+                                    <td>{{ customer.name }}</td>
+                                    <td>{{ customer.email }}</td>
+                                    <td>{{ customer.phone }}</td>
+                                    <td>{{ customer.date_created }}</td>
+                                    <td>
+                                        <span class="badge {% if customer.is_active %}badge-success{% else %}badge-danger{% endif %}">
+                                            {% if customer.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'customer_detail' customer.id %}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
