@@ -1,10 +1,14 @@
 from django.test import TestCase, Client
 from django.urls import reverse
+from accounts.models import CustomUser
 
 class IndexViewTests(TestCase):
 
     def setUp(self):
-        self.client = Client()  # Initialize the Django test client
+        # Create a client for testing
+        self.client = Client()
+        self.user = CustomUser.objects.create_user(username="testuser", password="password123", email="test@gmail.com", role="manager")
+        self.client.force_login(self.user)
 
     def test_index_view(self):
         """ Test if the index view renders correctly """

@@ -1,16 +1,17 @@
-from django.test import TestCase
+from django.test import TestCase, Client
 from django.urls import reverse
 from django.utils import timezone
 from shop.models.customer import Coupon, CustomerCoupon, Customer
 from decimal import Decimal
 from django.contrib.messages import get_messages
+from accounts.models import CustomUser
 
 
 class CouponViewTests(TestCase):
 
     def setUp(self):
         # Create a user for authentication if needed
-        self.user = Customer.objects.create(phone='9876543210', name='Jhon Doe')
+        self.customer = Customer.objects.create(phone='9876543210', name='Jhon Doe')
 
         # Create a coupon for testing
         self.coupon = Coupon.objects.create(
@@ -32,6 +33,10 @@ class CouponViewTests(TestCase):
             expiry_date=timezone.now() + timezone.timedelta(days=1),
             is_active=True
         )
+        # Create a client for testing
+        self.client = Client()
+        self.user = CustomUser.objects.create_user(username="testuser", password="password123", email="test@gmail.com", role="manager")
+        self.client.force_login(self.user)
 
     def test_view_coupon(self):
         response = self.client.get(reverse('view_coupon'))
@@ -205,7 +210,7 @@ class CouponViewTests(TestCase):
     def test_apply_coupon_already_used(self):
         CustomerCoupon.objects.create(
             coupon=self.coupon,
-            customer=self.user,
+            customer=self.customer,
             is_used=True
         )
         response = self.client.post(reverse('apply_coupon'), {

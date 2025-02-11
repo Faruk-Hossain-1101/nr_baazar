@@ -2,6 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from shop.models.product import Product
 from unittest.mock import patch
+from accounts.models import CustomUser
 
 class PrintBarcodeViewTests(TestCase):
     
@@ -57,6 +58,8 @@ class PrintBarcodeViewTests(TestCase):
 
         # Create a client for testing
         self.client = Client()
+        self.user = CustomUser.objects.create_user(username="testuser", password="password123", email="test@gmail.com", role="manager")
+        self.client.force_login(self.user) 
 
     @patch('shop.views.product.Product.objects.filter')  # Mock the database call
     def test_print_labels(self, mock_filter):

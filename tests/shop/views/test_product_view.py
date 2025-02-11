@@ -5,10 +5,15 @@ from decimal import Decimal
 import pytest # type: ignore
 from unittest.mock import patch
 from django.contrib.messages import get_messages
+from accounts.models import CustomUser
 
 class ProductViewTests(TestCase):
     def setUp(self):
+        # Create a client for testing
         self.client = Client()
+        self.user = CustomUser.objects.create_user(username="testuser", password="password123", email="test@gmail.com", role="manager")
+        self.client.force_login(self.user)
+
         self.product = Product.objects.create(
             name="Test Product",
             sku="TP123",
