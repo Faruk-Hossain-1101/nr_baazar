@@ -23,5 +23,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('login/', views.login_view, name="login_view"),
     path('logout/', views.logout_view, name="logout_view"),
-    path('', include('shop.urls'))
+    path('', include('shop.urls')),
+    path('whatsapp-callback/', views.whatsapp_callback, name="whatsapp_callback" )
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
