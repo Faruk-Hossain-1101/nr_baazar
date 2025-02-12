@@ -29,7 +29,7 @@ WHATSAPP_ACCESS_TOKEN = env('WHATSAPP_ACCESS_TOKEN')
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*)q7!2k#6cb*3rtwi36h0a2279&_5ccqen!-#gr15uo0c&s&d*'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
