@@ -26,7 +26,6 @@ class OrderModelTest(TestCase):
             total_amount=1000.00,
             discount_amount=100.00,
             actual_amount=900.00,
-            payment_status="Pending",
             coupon=self.coupon
         )
 
@@ -37,7 +36,6 @@ class OrderModelTest(TestCase):
         self.assertEqual(self.order.total_amount, 1000.00)
         self.assertEqual(self.order.discount_amount, 100.00)
         self.assertEqual(self.order.actual_amount, 900.00)
-        self.assertEqual(self.order.payment_status, "Pending")
         self.assertEqual(self.order.coupon, self.coupon)
 
     def test_order_str(self):
@@ -64,7 +62,6 @@ class OrderItemModelTest(TestCase):
             total_amount=2000.00,
             discount_amount=200.00,
             actual_amount=1800.00,
-            payment_status="Paid"
         )
 
         self.order_item = OrderItem.objects.create(

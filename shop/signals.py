@@ -1,6 +1,7 @@
 import os
 import requests
 import uuid
+from decimal import Decimal
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.timezone import now
@@ -26,7 +27,7 @@ def after_order_create_coustomer_reply(sender, instance, created, **kwargs):
     }
     
     # Check if the order qualifies for a coupon
-    if instance.total_amount >= 2000:
+    if Decimal(instance.total_amount) >= 2000:
         customer_coupon = CustomerCoupon.objects.filter(customer=instance.customer).first()
         expiry_date = now() + timedelta(days=90)
         uuid_id = f"SAVE10-{str(uuid.uuid4())[:6].upper()}"

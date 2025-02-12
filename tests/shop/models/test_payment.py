@@ -19,13 +19,12 @@ class PaymentModelTest(TestCase):
             total_amount=1500.00,
             discount_amount=200.00,
             actual_amount=1300.00,
-            payment_status="Pending"
         )
 
         self.payment = Payment.objects.create(
             order=self.order,
-            payment_method="Online",
-            payment_status="Success",
+            payment_method="online",
+            payment_status="success",
             paid_amount=1300.00,
             due_amount=0.00
         )
@@ -33,8 +32,8 @@ class PaymentModelTest(TestCase):
     def test_payment_creation(self):
         """Test if a payment is created successfully."""
         self.assertEqual(self.payment.order, self.order)
-        self.assertEqual(self.payment.payment_method, "Online")
-        self.assertEqual(self.payment.payment_status, "Success")
+        self.assertEqual(self.payment.payment_method, "online")
+        self.assertEqual(self.payment.payment_status, "success")
         self.assertEqual(self.payment.paid_amount, 1300.00)
         self.assertEqual(self.payment.due_amount, 0.00)
 

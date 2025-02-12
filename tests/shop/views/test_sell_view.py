@@ -185,8 +185,6 @@ class ShopViewTests(TestCase):
         self.assertEqual(order.total_amount, Decimal("200.00"))  # 2 items * 100 each
         self.assertEqual(order.discount_amount, Decimal("20.00"))  # 10*2 + 50 coupon
         self.assertEqual(order.actual_amount, Decimal("180.00"))  # 200 - 70
-        self.assertEqual(order.paid_amount, Decimal("180.00"))  # Paid amount
-        self.assertEqual(order.due_amount, Decimal("0.00"))  # Paid in full
 
         # Verify order item was created
         order_item = OrderItem.objects.filter(order=order).first()
