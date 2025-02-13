@@ -302,8 +302,11 @@
                     }
                 },
                 error: function(error) {
-                    console.log(error)
-                    alert('Error fetching product details');
+                    Swal.fire({
+                        title: "Oops!",
+                        text: "Error fetching product details!",
+                        icon: "error"
+                      });
                     callback(false)
                 }
             })
@@ -322,8 +325,11 @@
                     }
                 },
                 error: function(error) {
-                    console.log(error)
-                    alert('Error fetching product details');
+                    Swal.fire({
+                        title: "Oops!",
+                        text: "Error fetching product details!",
+                        icon: "error"
+                      });
                     callback(false)
                 }
             })
@@ -411,11 +417,19 @@
                                 $('#moveToCart').click()
                             }, 500)
                         } else {
-                            alert('Product not found');
+                            Swal.fire({
+                                title: "Oops!",
+                                text: "Product not found!",
+                                icon: "error"
+                              });
                         }
                     },
                     error: function() {
-                        alert('Error fetching product details');
+                        Swal.fire({
+                            title: "Oops!",
+                            text: "Error fetching product details!",
+                            icon: "error"
+                          });
                     }
                 });
             }
@@ -436,11 +450,19 @@
             if (productName && rate && qty) {
                 check_qty_availability(barcode, qty, function(isQtyValid){
                     if (!isQtyValid) {
-                        alert("Quantity higher than stock availability!");
+                        Swal.fire({
+                            title: "Warning!",
+                            text: "Quantity higher than stock availability!",
+                            icon: "warning"
+                          });
                     } else {
                         check_discount_price(barcode, discount, function(isValid){
                             if (!isValid) {
-                                alert("Invalid discount! Discount is more higher than purchase price!.");
+                                Swal.fire({
+                                    title: "Warning!",
+                                    text: "Invalid discount! Discounted price is higher than purchase price!",
+                                    icon: "warning"
+                                  });
                             } else {
                                 let existingItemIndex = cart.items.findIndex(item => item.barcode === barcode);
                                 if (existingItemIndex !== -1) {
@@ -517,7 +539,11 @@
                             }
                         },
                         error: function() {
-                            alert('Error fetching customer details.');
+                            Swal.fire({
+                                title: "Oops!",
+                                text: "Error fetching customer details!",
+                                icon: "error"
+                              });
                         }
                     });
                 } else {
@@ -540,11 +566,19 @@
         // To save the cart items into localStorage 
         $('#btnDraft').click(function() {
             if (cart.items.length == 0){
-                alert("Nothing to save!")
+                Swal.fire({
+                    title: "Warning!",
+                    text: "Nothing to save! Please add products.",
+                    icon: "warning"
+                  });
                 return false;
             }
             if (!cart.customer.phone){
-                alert("Custome name is required to save to draft!")
+                Swal.fire({
+                    title: "Warning!",
+                    text: "Custome phone no is required to save to draft!",
+                    icon: "warning"
+                  });
                 return false;
             }
             cart.coupon = {};
@@ -565,7 +599,11 @@
             updateCustomer();
             updateRoundoffPayedAmmount();
             $("#roundOffBtn").prop("disabled", false);
-            alert("Cart saved for 24 hours!");
+            Swal.fire({
+                title: "Good job!",
+                text: "Cart saved for 24 hours!",
+                icon: "success"
+              });
         });
 
         // Coupon code apply
@@ -573,7 +611,11 @@
             let csrfToken = $("#csrf_token").val();
             let couponCode = $('#couponCode').val().trim();
             if (cart.coupon && cart.coupon.code) {
-                alert("Coupon already applied!");
+                Swal.fire({
+                    title: "Warning!",
+                    text: "Coupon already applied!",
+                    icon: "warning"
+                  });
                 return false;
             }
         
@@ -594,11 +636,19 @@
                         }
                     },
                     error: function() {
-                        alert('Error checking coupon validity.');
+                        Swal.fire({
+                            title: "Oops!",
+                            text: "Something went wrong! Checking coupon validity!",
+                            icon: "error"
+                          });
                     }
                 });
             } else {
-                alert('Please enter a coupon code.');
+                Swal.fire({
+                    title: "Warning!",
+                    text: "Please enter a valid coupon code!",
+                    icon: "warning"
+                  });
             }
         });
 
@@ -609,7 +659,11 @@
         $("#purchaseBtn").click(function(){
             let csrf_token = $("#csrf_token").val();
             if (!cart.totalAmount || cart.items.length <= 0) { 
-                alert("At least one product required!");
+                Swal.fire({
+                    title: "Warning!",
+                    text: "At least one product required to save draft!",
+                    icon: "warning"
+                  });
                 return false;
             }
             $.ajax({

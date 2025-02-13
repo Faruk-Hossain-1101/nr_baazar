@@ -284,7 +284,11 @@ window.onafterprint = function() {
           localStorage.setItem($("#phoneNumber").text(), JSON.stringify(''));
           window.location.href = `/sell/`
         }else{
-            alert("Something went wrong!")
+          Swal.fire({
+            title: "Oops!",
+            text: "Something went wrong! while bill printing!",
+            icon: "error"
+          });
         }
     },
     error: function(error){
